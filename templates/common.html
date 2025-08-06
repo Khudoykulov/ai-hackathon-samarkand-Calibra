@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sug'orish Tizimi - Professional Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 0;
+        }
+
+        .nav-links li {
+            position: relative;
+        }
+
+        .nav-links a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.3);
+        }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Page Sections */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Common Styles */
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #00ff87;
+        }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+        /* Dashboard Specific */
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+        }
+
+        .status-card.warning::before {
+            background: linear-gradient(90deg, #ff9a00, #ffcd00);
+        }
+
+        .status-card.danger::before {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        /* Charts and Stats */
+        .chart-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-placeholder {
+            color: #60efff;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Animated Chart Bars */
+        .chart-bars {
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            height: 200px;
+            justify-content: center;
+        }
+
+        .chart-bar {
+            background: linear-gradient(to top, #00ff87, #60efff);
+            border-radius: 5px 5px 0 0;
+            min-width: 30px;
+            animation: growUp 2s ease;
+            position: relative;
+        }
+
+        .chart-bar:nth-child(1) { height: 60%; animation-delay: 0.1s; }
+        .chart-bar:nth-child(2) { height: 80%; animation-delay: 0.2s; }
+        .chart-bar:nth-child(3) { height: 45%; animation-delay: 0.3s; }
+        .chart-bar:nth-child(4) { height: 90%; animation-delay: 0.4s; }
+        .chart-bar:nth-child(5) { height: 70%; animation-delay: 0.5s; }
+        .chart-bar:nth-child(6) { height: 55%; animation-delay: 0.6s; }
+        .chart-bar:nth-child(7) { height: 85%; animation-delay: 0.7s; }
+
+        @keyframes growUp {
+            from { height: 0; }
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .data-table th {
+            background: rgba(0, 255, 135, 0.2);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #00ff87;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 15px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #ff9a00, #ffcd00);
+        }
+
+        .progress-fill.critical {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        }
+
+        /* AI Brain Animation */
+        .ai-brain {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 135, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 135, 0.6); }
+        }
+
+        .control-btn.stop {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+        }
+
+        /* Weather Cards */
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .weather-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .weather-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .weather-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #60efff;
+            margin-bottom: 5px;
+        }
+
+        .weather-label {
+            opacity: 0.8;
+        }
+
+        /* Sensor Grid */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .sensor-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #00ff87;
+            transition: all 0.3s ease;
+        }
+
+        .sensor-card:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .sensor-card.warning {
+            border-left-color: #ff9a00;
+        }
+
+        .sensor-card.critical {
+            border-left-color: #ff416c;
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 65, 108, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(255, 65, 108, 0.6); }
+        }
+
+        .sensor-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .sensor-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ff87;
+            margin-bottom: 5px;
+        }
+
+        .sensor-status {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Live Data Feed */
+        .data-feed {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .data-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .data-entry:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            color: #60efff;
+            margin-right: 10px;
+        }
+
+        .data-normal { color: #00ff87; }
+        .data-warning { color: #ff9a00; }
+        .data-critical { color: #ff416c; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(15px);
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .weather-grid, .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #60efff, #00ff87);
+        }
+
+        /* Background Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.3), transparent);
+            background-repeat: repeat;
+            background-size: 200px 150px;
+            animation: particle-animation 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes particle-animation {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-200px, -150px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span>🤖</span>
+                AI Sug'orish Tizimi
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#" class="nav-link active" data-page="dashboard">🏠 Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-page="weather">🌤️ Ob-havo</a></li>
+                <li><a href="#" class="nav-link" data-page="sensors">📡 Datchilar</a></li>
+                <li><a href="#" class="nav-link" data-page="ai">🧠 AI Tahlil</a></li>
+                <li><a href="#" class="nav-link" data-page="statistics">📊 Statistika</a></li>
+                <li><a href="#" class="nav-link" data-page="control">⚙️ Boshqaruv</a></li>
+            </ul>
+            <button class="nav-toggle" id="navToggle">☰</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-card">
+                    <span class="status-icon">🌱</span>
+                    <div class="status-value">FAOL</div>
+                    <div class="status-label">Tizim Holati</div>
+                </div>
+
+                <div class="status-card warning">
+                    <span class="status-icon">💧</span>
+                    <div class="status-value">PAST</div>
+                    <div class="status-label">Suv Darajasi</div>
+                </div>
+
+                <div class="status-card">
+                    <span class="status-icon">🧠</span>
+                    <div class="status-value">TAHLIL</div>
+                    <div class="status-label">AI Holati</div>
+                </div>
+
+                <div class="status-card danger">
+                    <span class="status-icon">⚡</span>
+                    <div class="status-value">SUGH.</div>
+                    <div class="status-label">Hozirgi Harakat</div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid-2">
+                <!-- Soil Analysis Panel -->
+                <div class="panel">
+                    <h2>🌍 Tuproq Tahlili</h2>
+
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Tuproq namligi</span>
+                            <span>23%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill critical" style="width: 23%"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>pH darajasi</span>
+                            <span>6.8</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 68%"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Tuproq harorati</span>
+                            <span>18°C</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill warning" style="width: 45%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Weather -->
+                <div class="panel">
+                    <h2>🌤️ Ob-havo (Qisqa)</h2>
+
+                    <div class="grid-3">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem;">🌡️</div>
+                            <div style="font-size: 1.5rem; color: #60efff; margin: 10px 0;">24°C</div>
+                            <div>Harorat</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem;">💨</div>
+                            <div style="font-size: 1.5rem; color: #60efff; margin: 10px 0;">45%</div>
+                            <div>Namlik</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem;">🌧️</div>
+                            <div style="font-size: 1.5rem; color: #ff9a00; margin: 10px 0;">0mm</div>
+                            <div>Yomg'ir</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Data Feed -->
+            <div class="panel">
+                <h2>📡 Jonli Ma'lumotlar</h2>
+                <div class="data-feed">
+                    <div class="data-entry data-critical">
+                        <span class="timestamp">[14:25:33]</span>
+                        OGOHLANTIRISH: Tuproq namligi 23% - Kritik daraja
+                    </div>
+                    <div class="data-entry data-warning">
+                        <span class="timestamp">[14:25:30]</span>
+                        Havo namligi pasaydi: 45%
+                    </div>
+                    <div class="data-entry data-normal">
+                        <span class="timestamp">[14:25:27]</span>
+                        AI tahlil yakunlandi - Sug'orish tavsiya etiladi
+                    </div>
+                    <div class="data-entry data-warning">
+                        <span class="timestamp">[14:25:24]</span>
+                        Ob-havo: Yomg'ir kutilmaydi - 6 soat
+                    </div>
+                    <div class="data-entry data-normal">
+                        <span class="timestamp">[14:25:21]</span>
+                        Datchiklardan ma'lumot olindi
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Analysis Page -->
+        <div id="weather" class="page">
+            <div class="panel">
+                <h2>🌤️ Ob-havo Tahlili va Bashorati</h2>
+            </div>
+
+            <!-- Current Weather -->
+            <div class="weather-grid">
+                <div class="weather-card">
+                    <div class="weather-icon">🌡️</div>
+                    <div class="weather-value">24°C</div>
+                    <div class="weather-label">Hozirgi Harorat</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Min: 18°C | Max: 28°C</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-icon">💨</div>
+                    <div class="weather-value">45%</div>
+                    <div class="weather-label">Havo Namligi</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Quruq havo</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-icon">🌧️</div>
+                    <div class="weather-value">0mm</div>
+                    <div class="weather-label">Yomg'ir</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Oxirgi: 3 kun oldin</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-icon">💨</div>
+                    <div class="weather-value">12 km/h</div>
+                    <div class="weather-label">Shamol Tezligi</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Shimol-g'arb</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-icon">☀️</div>
+                    <div class="weather-value">850 W/m²</div>
+                    <div class="weather-label">Quyosh Radiatsiyasi</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Yuqori daraja</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-icon">🌀</div>
+                    <div class="weather-value">1013</div>
+                    <div class="weather-label">Bosim (hPa)</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">Normal</div>
+                </div>
+            </div>
+
+            <!-- 7-Day Forecast Chart -->
+            <div class="panel">
+                <h2>📈 7 Kunlik Prognoz</h2>
+                <div class="chart-container">
+                    <div style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                            <span>Bugun</span>
+                            <span>Ertaga</span>
+                            <span>Payshanba</span>
+                            <span>Juma</span>
+                            <span>Shanba</span>
+                            <span>Yakshanba</span>
+                            <span>Dushanba</span>
+                        </div>
+                        <div class="chart-bars">
+                            <div class="chart-bar" title="24°C"></div>
+                            <div class="chart-bar" title="26°C"></div>
+                            <div class="chart-bar" title="22°C"></div>
+                            <div class="chart-bar" title="28°C"></div>
+                            <div class="chart-bar" title="25°C"></div>
+                            <div class="chart-bar" title="23°C"></div>
+                            <div class="chart-bar" title="27°C"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">
+                            <span>☀️</span>
+                            <span>⛅</span>
+                            <span>🌧️</span>
+                            <span>☀️</span>
+                            <span>⛅</span>
+                            <span>🌧️</span>
+                            <span>☀️</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Impact Analysis -->
+            <div class="panel">
+                <h2>🎯 Ob-havoning Ta'siri</h2>
+                <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px;">
+                    <h3 style="color: #ff9a00; margin-bottom: 15px;">⚠️ Ogohlantirish</h3>
+                    <p style="margin-bottom: 10px;">• Havo namligi past (45%) - O'simliklar stressda</p>
+                    <p style="margin-bottom: 10px;">• Keyingi 48 soat davomida yomg'ir kutilmaydi</p>
+                    <p style="margin-bottom: 10px;">• Yuqori quyosh radiatsiyasi - suvning bug'lanishi tez</p>
+                    <p>• Shamol tezligi o'rtacha - qo'shimcha quruqlik</p>
+                </div>
+
+                <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 20px; margin-top: 15px; border-left: 4px solid #00ff87;">
+                    <h3 style="color: #00ff87; margin-bottom: 15px;">💡 AI Tavsiyasi</h3>
+                    <p style="margin-bottom: 10px;">• Darhol sug'orish zarur</p>
+                    <p style="margin-bottom: 10px;">• Optimal vaqt: Ertalab 6:00-8:00 yoki kechqurun 18:00-20:00</p>
+                    <p>• Mulch (qoplama) qo'llash tavsiya etiladi</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensors Data Page -->
+        <div id="sensors" class="page">
+            <div class="panel">
+                <h2>📡 Datchilar Ma'lumotlari</h2>
+                <p style="opacity: 0.8;">Real vaqtda barcha datchilardan keladigan ma'lumotlar</p>
+            </div>
+
+            <!-- Active Sensors Grid -->
+            <div class="sensor-grid">
+                <div class="sensor-card critical">
+                    <div class="sensor-name">🌍 Tuproq Namligi Datchigi #1</div>
+                    <div class="sensor-value">23%</div>
+                    <div class="sensor-status">Kritik - Darhol sug'orish kerak</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: A sektori, 2-qator<br>
+                        Oxirgi yangilanish: 30 soniya oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card warning">
+                    <div class="sensor-name">🌍 Tuproq Namligi Datchigi #2</div>
+                    <div class="sensor-value">35%</div>
+                    <div class="sensor-status">Ogohlantirish - Kuzatish kerak</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: B sektori, 1-qator<br>
+                        Oxirgi yangilanish: 45 soniya oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">🌡️ Tuproq Harorati #1</div>
+                    <div class="sensor-value">18°C</div>
+                    <div class="sensor-status">Normal - Optimal daraja</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: A sektori, chuqurlik 15cm<br>
+                        Oxirgi yangilanish: 1 daqiqa oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">💨 Havo Namligi Datchigi</div>
+                    <div class="sensor-value">45%</div>
+                    <div class="sensor-status">Normal - Biroz quruq</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: Markaziy meteo stantsiya<br>
+                        Oxirgi yangilanish: 2 daqiqa oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">🌡️ Havo Harorati</div>
+                    <div class="sensor-value">24°C</div>
+                    <div class="sensor-status">Optimal - Yaxshi shart</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: Markaziy meteo stantsiya<br>
+                        Oxirgi yangilanish: 2 daqiqa oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">🌧️ Yomg'ir Datchigi</div>
+                    <div class="sensor-value">0 mm</div>
+                    <div class="sensor-status">Faol - Yomg'ir yo'q</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: Markaziy meteo stantsiya<br>
+                        Oxirgi yomg'ir: 3 kun oldin (12mm)
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">⚡ pH Datchigi</div>
+                    <div class="sensor-value">6.8</div>
+                    <div class="sensor-status">Normal - Optimal pH</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: A sektori, chuqurlik 20cm<br>
+                        Oxirgi yangilanish: 5 daqiqa oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">🔌 O'tkazuvchanlik</div>
+                    <div class="sensor-value">1.2 mS/cm</div>
+                    <div class="sensor-status">Normal - Yaxshi holat</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: A sektori, chuqurlik 20cm<br>
+                        Oxirgi yangilanish: 5 daqiqa oldin
+                    </div>
+                </div>
+
+                <div class="sensor-card">
+                    <div class="sensor-name">☀️ Yorug'lik Datchigi</div>
+                    <div class="sensor-value">850 W/m²</div>
+                    <div class="sensor-status">Yuqori - Quyoshli kun</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                        Joylashuv: Markaziy meteo stantsiya<br>
+                        Oxirgi yangilanish: 1 daqiqa oldin
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors Data Table -->
+            <div class="panel">
+                <h2>📊 Datchilar Statistikasi (Oxirgi 24 soat)</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Datchik</th>
+                            <th>Hozirgi Qiymat</th>
+                            <th>Min (24s)</th>
+                            <th>Max (24s)</th>
+                            <th>O'rtacha</th>
+                            <th>Holati</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🌍 Tuproq Namligi #1</td>
+                            <td style="color: #ff416c; font-weight: bold;">23%</td>
+                            <td>19%</td>
+                            <td>45%</td>
+                            <td>31%</td>
+                            <td style="color: #ff416c;">Kritik</td>
+                        </tr>
+                        <tr>
+                            <td>🌡️ Tuproq Harorati</td>
+                            <td style="color: #00ff87; font-weight: bold;">18°C</td>
+                            <td>15°C</td>
+                            <td>22°C</td>
+                            <td>18.5°C</td>
+                            <td style="color: #00ff87;">Normal</td>
+                        </tr>
+                        <tr>
+                            <td>💨 Havo Namligi</td>
+                            <td style="color: #ff9a00; font-weight: bold;">45%</td>
+                            <td>42%</td>
+                            <td>68%</td>
+                            <td>55%</td>
+                            <td style="color: #ff9a00;">Past</td>
+                        </tr>
+                        <tr>
+                            <td>🌡️ Havo Harorati</td>
+                            <td style="color: #00ff87; font-weight: bold;">24°C</td>
+                            <td>18°C</td>
+                            <td>28°C</td>
+                            <td>23°C</td>
+                            <td style="color: #00ff87;">Optimal</td>
+                        </tr>
+                        <tr>
+                            <td>⚡ pH Darajasi</td>
+                            <td style="color: #00ff87; font-weight: bold;">6.8</td>
+                            <td>6.5</td>
+                            <td>7.1</td>
+                            <td>6.8</td>
+                            <td style="color: #00ff87;">Ideal</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Analysis Page -->
+        <div id="ai" class="page">
+            <div class="panel">
+                <h2>🧠 AI Tahlil va Qarorlar</h2>
+                <div class="ai-brain">🤖</div>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h3 style="color: #00ff87; margin-bottom: 10px;">AI Tizimi - Real vaqtda tahlil</h3>
+                    <p style="opacity: 0.8;">Barcha datchilar ma'lumotlarini tahlil qilib, optimal qarorlar qabul qilyapti</p>
+                </div>
+            </div>
+
+            <!-- AI Decision Making -->
+            <div class="grid-2">
+                <div class="panel">
+                    <h2>⚡ Joriy AI Qarori</h2>
+                    <div style="background: rgba(255, 65, 108, 0.2); border-radius: 10px; padding: 20px; border-left: 4px solid #ff416c; margin-bottom: 20px; animation: alertPulse 2s infinite;">
+                        <h3 style="color: #ff416c; margin-bottom: 10px;">🚨 TEZKOR HARAKAT</h3>
+                        <p style="font-weight: bold; margin-bottom: 15px;">Darhol sug'orish boshlash tavsiya etiladi!</p>
+
+                        <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 0.9rem;">
+                            <div style="color: #60efff;">AI_DECISION: URGENT_IRRIGATION_REQUIRED</div>
+                            <div style="color: #ff9a00;">CONFIDENCE_LEVEL: 94%</div>
+                            <div style="color: #00ff87;">ESTIMATED_DURATION: 18_MINUTES</div>
+                            <div style="color: #ff416c;">PRIORITY: CRITICAL</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255, 154, 0, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #ff9a00;">
+                        <h4 style="color: #ff9a00; margin-bottom: 10px;">📊 AI Tahlili:</h4>
+                        <ul style="margin-left: 20px; line-height: 1.6;">
+                            <li>Tuproq namligi kritik (23% < 40% optimal)</li>
+                            <li>Yomg'ir ehtimoli past (8%)</li>
+                            <li>O'simliklar stress belgilari</li>
+                            <li>Bug'lanish darajasi yuqori</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>📈 AI O'rganish Jarayoni</h2>
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #00ff87; margin-bottom: 10px;">🎯 Hozirgi AI Modeli:</h4>
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>O'qitilganlik darajasi</span>
+                                <span>87%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 87%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Aniqlik darajasi</span>
+                                <span>94%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 94%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Ma'lumotlar bazasi</span>
+                                <span>15,847 yozuv</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(96, 239, 255, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #60efff;">
+                        <h4 style="color: #60efff; margin-bottom: 10px;">🔬 Oxirgi 7 kunda o'rgandi:</h4>
+                        <ul style="margin-left: 20px; line-height: 1.6; font-size: 0.9rem;">
+                            <li>Optimal sug'orish vaqtlari</li>
+                            <li>Ob-havo naqshlari tahlili</li>
+                            <li>O'simliklar stress belgilari</li>
+                            <li>Suv tejash strategiyalari</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Recommendations Timeline -->
+            <div class="panel">
+                <h2>⏰ AI Tavsiyalar Vaqt Jadvali</h2>
+                <div style="position: relative; padding-left: 30px;">
+                    <!-- Timeline line -->
+                    <div style="position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #00ff87, #60efff);"></div>
+
+                    <!-- Timeline items -->
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div style="position: absolute; left: -22px; width: 12px; height: 12px; background: #ff416c; border-radius: 50%; border: 3px solid #1e3c72;"></div>
+                        <div style="background: rgba(255, 65, 108, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #ff416c;">
+                            <div style="font-weight: bold; color: #ff416c;">14:25 - KRITIK OGOHLANTIRISH</div>
+                            <div style="margin-top: 5px;">Tuproq namligi 23% - Darhol sug'orish kerak</div>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div style="position: absolute; left: -22px; width: 12px; height: 12px; background: #ff9a00; border-radius: 50%; border: 3px solid #1e3c72;"></div>
+                        <div style="background: rgba(255, 154, 0, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #ff9a00;">
+                            <div style="font-weight: bold; color: #ff9a00;">14:20 - BASHORAT YANGILANDI</div>
+                            <div style="margin-top: 5px;">Keyingi 48 soat yomg'ir kutilmaydi</div>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div style="position: absolute; left: -22px; width: 12px; height: 12px; background: #00ff87; border-radius: 50%; border: 3px solid #1e3c72;"></div>
+                        <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #00ff87;">
+                            <div style="font-weight: bold; color: #00ff87;">14:15 - MUVAFFAQIYATLI TAHLIL</div>
+                            <div style="margin-top: 5px;">Barcha datchilardan ma'lumot muvaffaqiyatli olindi</div>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div style="position: absolute; left: -22px; width: 12px; height: 12px; background: #60efff; border-radius: 50%; border: 3px solid #1e3c72;"></div>
+                        <div style="background: rgba(96, 239, 255, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #60efff;">
+                            <div style="font-weight: bold; color: #60efff;">14:10 - MODEL YANGILANDI</div>
+                            <div style="margin-top: 5px;">AI modeli yangi ma'lumotlar bilan o'qitildi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Page -->
+        <div id="statistics" class="page">
+            <div class="panel">
+                <h2>📊 Tizim Statistikalari</h2>
+                <p style="opacity: 0.8;">Umumiy ishlash ko'rsatkichlari va tahlillar</p>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid-4">
+                <div class="status-card">
+                    <span class="status-icon">💧</span>
+                    <div class="status-value">2,847L</div>
+                    <div class="status-label">Ish haftasida ishlatilgan suv</div>
+                </div>
+
+                <div class="status-card">
+                    <span class="status-icon">⚡</span>
+                    <div class="status-value">156</div>
+                    <div class="status-label">Avtomatik sug'orishlar</div>
+                </div>
+
+                <div class="status-card">
+                    <span class="status-icon">🎯</span>
+                    <div class="status-value">94%</div>
+                    <div class="status-label">AI aniqlik darajasi</div>
+                </div>
+
+                <div class="status-card">
+                    <span class="status-icon">💰</span>
+                    <div class="status-value">₽847</div>
+                    <div class="status-label">Tejamkorlik (oylik)</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid-2">
+                <div class="panel">
+                    <h2>📈 Tuproq Namligi Trendi (7 kun)</h2>
+                    <div class="chart-container">
+                        <div style="width: 100%; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; opacity: 0.3;">
+                                <div style="border-top: 1px solid #fff;">100%</div>
+                                <div style="border-top: 1px solid #fff;">75%</div>
+                                <div style="border-top: 1px solid #fff;">50%</div>
+                                <div style="border-top: 1px solid #fff;">25%</div>
+                                <div style="border-top: 1px solid #fff;">0%</div>
+                            </div>
+                            <svg style="width: 100%; height: 100%;" viewBox="0 0 300 200">
+                                <polyline fill="none" stroke="#00ff87" stroke-width="3" points="20,150 60,120 100,140 140,100 180,130 220,110 260,160"/>
+                                <circle cx="20" cy="150" r="4" fill="#00ff87"/>
+                                <circle cx="60" cy="120" r="4" fill="#00ff87"/>
+                                <circle cx="100" cy="140" r="4" fill="#00ff87"/>
+                                <circle cx="140" cy="100" r="4" fill="#00ff87"/>
+                                <circle cx="180" cy="130" r="4" fill="#00ff87"/>
+                                <circle cx="220" cy="110" r="4" fill="#00ff87"/>
+                                <circle cx="260" cy="160" r="4" fill="#ff416c"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>🌡️ Harorat Dinamikasi</h2>
+                    <div class="chart-container">
+                        <div class="chart-bars">
+                            <div class="chart-bar" style="height: 45%; background: linear-gradient(to top, #60efff, #00ff87);" title="Dushanba"></div>
+                            <div class="chart-bar" style="height: 60%; background: linear-gradient(to top, #60efff, #00ff87);" title="Seshanba"></div>
+                            <div class="chart-bar" style="height: 55%; background: linear-gradient(to top, #60efff, #00ff87);" title="Chorshanba"></div>
+                            <div class="chart-bar" style="height: 70%; background: linear-gradient(to top, #60efff, #00ff87);" title="Payshanba"></div>
+                            <div class="chart-bar" style="height: 80%; background: linear-gradient(to top, #60efff, #00ff87);" title="Juma"></div>
+                            <div class="chart-bar" style="height: 65%; background: linear-gradient(to top, #60efff, #00ff87);" title="Shanba"></div>
+                            <div class="chart-bar" style="height: 50%; background: linear-gradient(to top, #ff9a00, #ff416c);" title="Yakshanba"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Statistics Table -->
+            <div class="panel">
+                <h2>📋 Batafsil Hisobot (Oxirgi 30 kun)</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ko'rsatkich</th>
+                            <th>Joriy Qiymat</th>
+                            <th>O'tgan Oy</th>
+                            <th>O'zgarish</th>
+                            <th>Maqsad</th>
+                            <th>Baholash</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>💧 Suv Sarfi (kunlik o'rtacha)</td>
+                            <td>847L</td>
+                            <td>1,240L</td>
+                            <td style="color: #00ff87;">-32%</td>
+                            <td>800L</td>
+                            <td style="color: #ff9a00;">5% oshiq</td>
+                        </tr>
+                        <tr>
+                            <td>🎯 AI To'g'ri Bashoratlar</td>
+                            <td>94%</td>
+                            <td>87%</td>
+                            <td style="color: #00ff87;">+7%</td>
+                            <td>95%</td>
+                            <td style="color: #ff9a00;">Yaqin</td>
+                        </tr>
+                        <tr>
+                            <td>⚡ Avtomatik Harakatlar</td>
+                            <td>156</td>
+                            <td>203</td>
+                            <td style="color: #00ff87;">-23%</td>
+                            <td>150</td>
+                            <td style="color: #00ff87;">Maqsadda</td>
+                        </tr>
+                        <tr>
+                            <td>🌱 O'simlik Sog'ligi</td>
+                            <td>92%</td>
+                            <td>78%</td>
+                            <td style="color: #00ff87;">+18%</td>
+                            <td>90%</td>
+                            <td style="color: #00ff87;">Yaxshi</td>
+                        </tr>
+                        <tr>
+                            <td>💰 Oylik Tejamkorlik</td>
+                            <td>₽2,350</td>
+                            <td>₽1,890</td>
+                            <td style="color: #00ff87;">+24%</td>
+                            <td>₽2,000</td>
+                            <td style="color: #00ff87;">Muvaffaqiyat</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="panel">
+                <h2>🏆 Ishlash Tahlili</h2>
+                <div class="grid-3">
+                    <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 20px; text-align: center; border: 2px solid rgba(0, 255, 135, 0.3);">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">🥇</div>
+                        <h3 style="color: #00ff87; margin-bottom: 10px;">Eng Yaxshi</h3>
+                        <p>AI aniqlik darajasi o'tgan oyga nisbatan 7% oshdi</p>
+                    </div>
+
+                    <div style="background: rgba(96, 239, 255, 0.1); border-radius: 10px; padding: 20px; text-align: center; border: 2px solid rgba(96, 239, 255, 0.3);">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">📈</div>
+                        <h3 style="color: #60efff; margin-bottom: 10px;">Yaxshilanish</h3>
+                        <p>Suv sarfiyoti 32% kamaydi, lekin samaradorlik oshdi</p>
+                    </div>
+
+                    <div style="background: rgba(255, 154, 0, 0.1); border-radius: 10px; padding: 20px; text-align: center; border: 2px solid rgba(255, 154, 0, 0.3);">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">⚠️</div>
+                        <h3 style="color: #ff9a00; margin-bottom: 10px;">E'tibor</h3>
+                        <p>Tuproq namligi ko'proq kuzatish talab qiladi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel Page -->
+        <div id="control" class="page">
+            <div class="panel">
+                <h2>⚙️ Tizim Boshqaruvi</h2>
+                <p style="opacity: 0.8;">Manual va avtomatik rejimlar, tizim sozlamalari</p>
+            </div>
+
+            <!-- System Control Cards -->
+            <div class="grid-2">
+                <div class="panel">
+                    <h2>🎮 Asosiy Boshqaruv</h2>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: #00ff87; margin-bottom: 15px;">Tizim Rejimi</h3>
+                        <div class="controls">
+                            <button class="control-btn active">🤖 Avtomatik Rejim</button>
+                            <button class="control-btn">👤 Qo'lda Boshqarish</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: #60efff; margin-bottom: 15px;">Sug'orish Boshqaruvi</h3>
+                        <div class="controls">
+                            <button class="control-btn" style="background: linear-gradient(45deg, #00ff87, #60efff);">▶️ Sug'orishni Boshlash</button>
+                            <button class="control-btn stop">⏹️ To'xtatish</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #ff9a00; margin-bottom: 15px;">Tez Harakatlar</h3>
+                        <div class="controls">
+                            <button class="control-btn">🔄 Tizimni Qayta Ishga Tushirish</button>
+                            <button class="control-btn">📊 Hisobot Yaratish</button>
+                            <button class="control-btn">🧪 Test Rejimi</button>
+                            <button class="control-btn">🔧 Kalibrlash</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>⏱️ Vaqt Sozlamalari</h2>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #60efff; font-weight: 500;">Optimal sug'orish vaqti (ertalab):</label>
+                        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>06:00 - 08:00</span>
+                            <button style="background: #00ff87; border: none; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer;">O'zgartirish</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #60efff; font-weight: 500;">Optimal sug'orish vaqti (kechqurun):</label>
+                        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>18:00 - 20:00</span>
+                            <button style="background: #00ff87; border: none; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer;">O'zgartirish</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #60efff; font-weight: 500;">Datchilar tekshirish oralig'i:</label>
+                        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Har 2 daqiqada</span>
+                            <button style="background: #00ff87; border: none; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer;">O'zgartirish</button>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 15px; border-left: 4px solid #00ff87;">
+                        <h4 style="color: #00ff87; margin-bottom: 10px;">💡 AI Tavsiyasi:</h4>
+                        <p style="font-size: 0.9rem; line-height: 1.4;">Hozirgi sozlamalar optimal. Ob-havo sharoitlariga qarab vaqtlar avtomatik moslashtiriladi.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threshold Settings -->
+            <div class="panel">
+                <h2>🎯 Chegaraviy Qiymatlar</h2>
+                <div class="grid-3">
+                    <div>
+                        <h3 style="color: #ff416c; margin-bottom: 15px;">🚨 Kritik Chegara</h3>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>Tuproq namligi (min)</span>
+                                <span style="color: #ff416c; font-weight: bold;">25%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill critical" style="width: 25%"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>Havo harorati (max)</span>
+                                <span style="color: #ff416c; font-weight: bold;">35°C</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill critical" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #ff9a00; margin-bottom: 15px;">⚠️ Ogohlantirish Chegara</h3>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>Tuproq namligi</span>
+                                <span style="color: #ff9a00; font-weight: bold;">40%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill warning" style="width: 40%"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>Havo namligi (min)</span>
+                                <span style="color: #ff9a00; font-weight: bold;">50%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill warning" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #00ff87; margin-bottom: 15px;">✅ Optimal Chegara</h3>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>Tuproq namligi</span>
+                                <span style="color: #00ff87; font-weight: bold;">60-70%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>pH darajasi</span>
+                                <span style="color: #00ff87; font-weight: bold;">6.5-7.2</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 68%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="panel">
+                <h2>🔧 Tizim Holati va Diagnostika</h2>
+
+                <div class="grid-2">
+                    <div>
+                        <h3 style="color: #60efff; margin-bottom: 15px;">💾 Tizim Resurslari</h3>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>CPU Foydalanish</span>
+                                <span>23%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 23%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>RAM Foydalanish</span>
+                                <span>45%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill warning" style="width: 45%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Disk Bo'sh Joy</span>
+                                <span>78%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 78%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Internet Aloqa</span>
+                                <span>97%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 97%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #00ff87; margin-bottom: 15px;">📡 Datchilar Holati</h3>
+
+                        <table style="width: 100%; font-size: 0.9rem;">
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">🌍 Tuproq Namligi #1</td>
+                                <td style="text-align: right; color: #00ff87;">●  Faol</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">🌍 Tuproq Namligi #2</td>
+                                <td style="text-align: right; color: #00ff87;">●  Faol</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">🌡️ Havo Harorati</td>
+                                <td style="text-align: right; color: #00ff87;">●  Faol</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">💨 Havo Namligi</td>
+                                <td style="text-align: right; color: #00ff87;">●  Faol</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">🌧️ Yomg'ir Datchigi</td>
+                                <td style="text-align: right; color: #00ff87;">●  Faol</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 8px 0;">⚡ pH Datchigi</td>
+                                <td style="text-align: right; color: #ff9a00;">●  Kalibrlash</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0;">🔌 Suv Pompa #1</td>
+                                <td style="text-align: right; color: #00ff87;">●  Tayyor</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Controls -->
+            <div class="panel" style="border: 2px solid rgba(255, 65, 108, 0.3); background: rgba(255, 65, 108, 0.05);">
+                <h2 style="color: #ff416c;">🚨 Favqulodda Boshqaruv</h2>
+
+                <div style="background: rgba(255, 65, 108, 0.1); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: #ff416c; margin-bottom: 15px;">⚠️ Ogohlantirish</h3>
+                    <p style="margin-bottom: 15px;">Quyidagi tugmalar faqat favqulodda vaziyatlarda foydalaning. Bu harakatlar tizimning normal ishlashiga ta'sir qilishi mumkin.</p>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn stop" style="background: linear-gradient(45deg, #ff416c, #ff4b2b);">🛑 Barcha Tizimlarni To'xtatish</button>
+                    <button class="control-btn" style="background: linear-gradient(45deg, #ff9a00, #ffcd00);">⚡ Favqulodda Sug'orish</button>
+                    <button class="control-btn" style="background: linear-gradient(45deg, #667eea, #764ba2);">🔄 Factory Reset</button>
+                    <button class="control-btn" style="background: linear-gradient(45deg, #667eea, #764ba2);">📞 Texnik Yordam</button>
+                </div>
+
+                <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; font-size: 0.85rem;">
+                    <div style="color: #ff416c; margin-bottom: 5px;">[SYSTEM] Emergency controls ready</div>
+                    <div style="color: #60efff; margin-bottom: 5px;">[INFO] Last emergency action: Never</div>
+                    <div style="color: #00ff87;">[STATUS] All systems operational</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            const navToggle = document.getElementById('navToggle');
+            const navLinksContainer = document.getElementById('navLinks');
+
+            // Handle navigation
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Remove active class from all links and pages
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    pages.forEach(p => p.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Show corresponding page
+                    const targetPage = this.getAttribute('data-page');
+                    document.getElementById(targetPage).classList.add('active');
+
+                    // Close mobile menu
+                    navLinksContainer.classList.remove('active');
+                });
+            });
+
+            // Mobile menu toggle
+            navToggle.addEventListener('click', function() {
+                navLinksContainer.classList.toggle('active');
+            });
+
+            // Simulate real-time data updates
+            setInterval(function() {
+                // Update some values randomly
+                const soilMoisture = Math.floor(Math.random() * 10) + 20; // 20-30%
+                const airTemp = Math.floor(Math.random() * 8) + 20; // 20-28°C
+                const humidity = Math.floor(Math.random() * 20) + 40; // 40-60%
+
+                // Update dashboard values if elements exist
+                const soilElement = document.getElementById('soilMoisture');
+                if (soilElement) soilElement.textContent = soilMoisture + '%';
+
+                const tempElement = document.getElementById('airTemp');
+                if (tempElement) tempElement.textContent = airTemp + '°C';
+
+                const humidityElement = document.getElementById('humidity');
+                if (humidityElement) humidityElement.textContent = humidity + '%';
+
+                // Add new data entry
+                const dataFeed = document.querySelector('.data-feed');
+                if (dataFeed) {
+                    const now = new Date();
+                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                                   now.getMinutes().toString().padStart(2, '0') + ':' +
+                                   now.getSeconds().toString().padStart(2, '0');
+
+                    const entries = [
+                        `Tuproq namligi: ${soilMoisture}%`,
+                        `Havo harorati: ${airTemp}°C`,
+                        `Havo namligi: ${humidity}%`,
+                        'AI tahlil yakunlandi',
+                        'Datchilar ma\'lumotlari yangilandi'
+                    ];
+
+                    const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+                    const entryClass = soilMoisture < 25 ? 'data-critical' :
+                                      soilMoisture < 35 ? 'data-warning' : 'data-normal';
+
+                    const newEntry = document.createElement('div');
+                    newEntry.className = `data-entry ${entryClass}`;
+                    newEntry.innerHTML = `<span class="timestamp">[${timeStr}]</span> ${randomEntry}`;
+
+                    dataFeed.insertBefore(newEntry, dataFeed.firstChild);
+
+                    // Remove old entries (keep only latest 10)
+                    const entries_list = dataFeed.querySelectorAll('.data-entry');
+                    if (entries_list.length > 10) {
+                        dataFeed.removeChild(entries_list[entries_list.length - 1]);
+                    }
+                }
+            }, 15000); // Update every 15 seconds
+
+            // Control button interactions
+            const controlBtns = document.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Add click effect
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+
+                    // Simulate action feedback
+                    if (this.textContent.includes('Avtomatik')) {
+                        this.classList.toggle('active');
+                    }
+                });
+            });
+
+            // Animate progress bars on page load
+            const progressFills = document.querySelectorAll('.progress-fill');
+            progressFills.forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0%';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

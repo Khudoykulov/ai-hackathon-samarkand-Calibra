@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sug'orish - Ob-havo Tahlili</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 0;
+        }
+
+        .nav-links a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #00ff87;
+        }
+
+        /* Weather Grid */
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .weather-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .weather-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .weather-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+        }
+
+        .weather-card.warning::before {
+            background: linear-gradient(90deg, #ff9a00, #ffcd00);
+        }
+
+        .weather-card.danger::before {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        }
+
+        .weather-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .weather-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #60efff;
+            margin-bottom: 10px;
+        }
+
+        .weather-card.warning .weather-value {
+            color: #ff9a00;
+        }
+
+        .weather-card.danger .weather-value {
+            color: #ff416c;
+        }
+
+        .weather-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .weather-detail {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Forecast Chart */
+        .forecast-chart {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 20px 0;
+        }
+
+        .chart-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .chart-bar {
+            background: linear-gradient(to top, #60efff, #00ff87);
+            border-radius: 8px 8px 0 0;
+            min-width: 40px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .chart-bar:hover {
+            background: linear-gradient(to top, #00ff87, #60efff);
+            transform: scale(1.1);
+        }
+
+        .chart-bar.rain {
+            background: linear-gradient(to top, #4facfe, #00f2fe);
+        }
+
+        .chart-bar.hot {
+            background: linear-gradient(to top, #ff9a00, #ff416c);
+        }
+
+        .chart-day-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .chart-temp {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #60efff;
+            margin: 5px 0;
+        }
+
+        .chart-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        /* Hourly Forecast */
+        .hourly-forecast {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 20px 0;
+            margin: 20px 0;
+        }
+
+        .hourly-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+
+        .hourly-time {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .hourly-icon {
+            font-size: 1.5rem;
+            margin: 8px 0;
+        }
+
+        .hourly-temp {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #60efff;
+        }
+
+        /* Weather Impact */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .impact-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #00ff87;
+        }
+
+        .impact-card.warning {
+            border-left-color: #ff9a00;
+            background: rgba(255, 154, 0, 0.1);
+        }
+
+        .impact-card.danger {
+            border-left-color: #ff416c;
+            background: rgba(255, 65, 108, 0.1);
+        }
+
+        .impact-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00ff87;
+        }
+
+        .impact-card.warning .impact-title {
+            color: #ff9a00;
+        }
+
+        .impact-card.danger .impact-title {
+            color: #ff416c;
+        }
+
+        /* Weather Map */
+        .weather-map {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-placeholder {
+            font-size: 3rem;
+            opacity: 0.6;
+            color: #60efff;
+        }
+
+        /* Alerts */
+        .weather-alert {
+            background: linear-gradient(45deg, rgba(255, 65, 108, 0.2), rgba(255, 75, 43, 0.2));
+            border: 2px solid rgba(255, 65, 108, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 65, 108, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 65, 108, 0.6); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .weather-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-container {
+                height: 200px;
+            }
+
+            .hourly-forecast {
+                gap: 10px;
+            }
+
+            .hourly-item {
+                min-width: 80px;
+                padding: 12px;
+            }
+        }
+
+        /* Background Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent);
+            background-repeat: repeat;
+            background-size: 200px 150px;
+            animation: particle-animation 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes particle-animation {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-200px, -150px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span>🤖</span>
+                AI Sug'orish Tizimi
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">🏠 Dashboard</a></li>
+                <li><a href="weather.html" class="active">🌤️ Ob-havo</a></li>
+                <li><a href="sensors.html">📡 Datchilar</a></li>
+                <li><a href="ai.html">🧠 AI Tahlil</a></li>
+                <li><a href="statistics.html">📊 Statistika</a></li>
+                <li><a href="control.html">⚙️ Boshqaruv</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="panel">
+            <h2>🌤️ Ob-havo Tahlili va Bashorati</h2>
+            <p style="opacity: 0.8; margin-top: 10px;">
+                Real vaqt ob-havo ma'lumotlari va 7 kunlik prognoz bilan qishloq xo'jaligi uchun optimal qarorlar qabul qilish
+            </p>
+            <div style="margin-top: 15px; padding: 10px; background: rgba(0, 255, 135, 0.1); border-radius: 8px; font-size: 0.9rem;">
+                <strong style="color: #00ff87;">📡 Ma'lumot manbai:</strong> Milliy Gidrometeorologia Xizmati + AI tahlil
+            </div>
+        </div>
+
+        <!-- Weather Alert -->
+        <div class="weather-alert">
+            <h3 style="color: #ff416c; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                🌡️ OB-HAVO OGOHLANTIRISHI
+            </h3>
+            <p style="font-size: 1.1rem; margin-bottom: 10px;">
+                Keyingi 48 soat davomida yomg'ir kutilmaydi. Havo namligi past bo'lib qoladi.
+            </p>
+            <p style="font-size: 0.9rem; opacity: 0.9;">
+                <strong>AI tavsiyasi:</strong> Qo'shimcha sug'orish rejasini faollashtiring.
+            </p>
+        </div>
+
+        <!-- Current Weather Grid -->
+        <div class="weather-grid">
+            <div class="weather-card">
+                <div class="weather-icon">🌡️</div>
+                <div class="weather-value" id="currentTemp">24°C</div>
+                <div class="weather-label">Hozirgi Harorat</div>
+                <div class="weather-detail">
+                    Min: 18°C | Max: 28°C<br>
+                    His qilinayotgan: 26°C
+                </div>
+            </div>
+
+            <div class="weather-card warning">
+                <div class="weather-icon">💨</div>
+                <div class="weather-value" id="currentHumidity">45%</div>
+                <div class="weather-label">Havo Namligi</div>
+                <div class="weather-detail">
+                    Quruq havo<br>
+                    Normal: 60-80%
+                </div>
+            </div>
+
+            <div class="weather-card danger">
+                <div class="weather-icon">🌧️</div>
+                <div class="weather-value" id="currentRain">0mm</div>
+                <div class="weather-label">Yomg'ir (24s)</div>
+                <div class="weather-detail">
+                    Oxirgi yomg'ir:<br>
+                    3 kun oldin (12mm)
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="weather-icon">💨</div>
+                <div class="weather-value" id="windSpeed">12 km/h</div>
+                <div class="weather-label">Shamol</div>
+                <div class="weather-detail">
+                    Yo'nalish: Shimol-g'arb<br>
+                    Tezlik: O'rtacha
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="weather-icon">☀️</div>
+                <div class="weather-value" id="solarRadiation">850</div>
+                <div class="weather-label">Quyosh (W/m²)</div>
+                <div class="weather-detail">
+                    UV indeksi: 7 (Yuqori)<br>
+                    Kun uzunligi: 13s 42daq
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="weather-icon">🌀</div>
+                <div class="weather-value" id="pressure">1013</div>
+                <div class="weather-label">Bosim (hPa)</div>
+                <div class="weather-detail">
+                    Holat: Normal<br>
+                    Tendensiya: Barqaror
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="weather-icon">🌫️</div>
+                <div class="weather-value" id="visibility">15</div>
+                <div class="weather-label">Ko'rinish (km)</div>
+                <div class="weather-detail">
+                    Holat: Yaxshi<br>
+                    Tuman: Yo'q
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="weather-icon">🌡️</div>
+                <div class="weather-value" id="dewPoint">12°C</div>
+                <div class="weather-label">Shudring Nuqtasi</div>
+                <div class="weather-detail">
+                    Namlik kondensatsiyasi<br>
+                    nuqtasi harorati
+                </div>
+            </div>
+        </div>
+
+        <!-- 24-Hour Forecast -->
+        <div class="panel">
+            <h2>⏰ 24 Soatlik Prognoz</h2>
+            <div class="hourly-forecast">
+                <div class="hourly-item">
+                    <div class="hourly-time">15:00</div>
+                    <div class="hourly-icon">☀️</div>
+                    <div class="hourly-temp">25°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">0%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">16:00</div>
+                    <div class="hourly-icon">☀️</div>
+                    <div class="hourly-temp">26°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">0%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">17:00</div>
+                    <div class="hourly-icon">🌤️</div>
+                    <div class="hourly-temp">25°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">5%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">18:00</div>
+                    <div class="hourly-icon">🌤️</div>
+                    <div class="hourly-temp">23°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">8%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">19:00</div>
+                    <div class="hourly-icon">🌅</div>
+                    <div class="hourly-temp">22°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">3%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">20:00</div>
+                    <div class="hourly-icon">🌙</div>
+                    <div class="hourly-temp">20°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">0%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">21:00</div>
+                    <div class="hourly-icon">🌙</div>
+                    <div class="hourly-temp">19°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">0%</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">22:00</div>
+                    <div class="hourly-icon">🌙</div>
+                    <div class="hourly-temp">18°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7-Day Forecast Chart -->
+        <div class="panel">
+            <h2>📈 7 Kunlik Ob-havo Prognozi</h2>
+            <div class="forecast-chart">
+                <div class="chart-container">
+                    <div class="chart-day">
+                        <div class="chart-bar" style="height: 120px;" title="24°C"></div>
+                        <div class="chart-icon">☀️</div>
+                        <div class="chart-temp">24°C</div>
+                        <div class="chart-day-label">Bugun</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar" style="height: 140px;" title="26°C"></div>
+                        <div class="chart-icon">⛅</div>
+                        <div class="chart-temp">26°C</div>
+                        <div class="chart-day-label">Ertaga</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar rain" style="height: 100px;" title="22°C"></div>
+                        <div class="chart-icon">🌧️</div>
+                        <div class="chart-temp">22°C</div>
+                        <div class="chart-day-label">Payshanba</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar hot" style="height: 160px;" title="28°C"></div>
+                        <div class="chart-icon">☀️</div>
+                        <div class="chart-temp">28°C</div>
+                        <div class="chart-day-label">Juma</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar" style="height: 130px;" title="25°C"></div>
+                        <div class="chart-icon">⛅</div>
+                        <div class="chart-temp">25°C</div>
+                        <div class="chart-day-label">Shanba</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar rain" style="height: 110px;" title="23°C"></div>
+                        <div class="chart-icon">🌧️</div>
+                        <div class="chart-temp">23°C</div>
+                        <div class="chart-day-label">Yakshanba</div>
+                    </div>
+                    <div class="chart-day">
+                        <div class="chart-bar" style="height: 150px;" title="27°C"></div>
+                        <div class="chart-icon">☀️</div>
+                        <div class="chart-temp">27°C</div>
+                        <div class="chart-day-label">Dushanba</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+                    <h4 style="color: #60efff; margin-bottom: 10px;">📊 Haftalik Tahlil:</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9rem;">
+                        <div>☀️ <strong>Quyoshli kunlar:</strong> 4 kun</div>
+                        <div>🌧️ <strong>Yomg'irli kunlar:</strong> 2 kun</div>
+                        <div>🌡️ <strong>O'rtacha harorat:</strong> 24.7°C</div>
+                        <div>💧 <strong>Kutilayotgan yomg'ir:</strong> 18mm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Impact Analysis -->
+        <div class="panel">
+            <h2>🎯 Ob-havoning Qishloq Xo'jaligiga Ta'siri</h2>
+            <div class="impact-grid">
+                <div class="impact-card danger">
+                    <div class="impact-title">🚨 Kritik Ta'sirlar</div>
+                    <ul style="margin-left: 20px; line-height: 1.6;">
+                        <li>Havo namligi past (45%) - O'simliklar stressda</li>
+                        <li>Keyingi 48 soat yomg'ir kutilmaydi</li>
+                        <li>Yuqori bug'lanish tezligi</li>
+                        <li>Tuproq namligining tez pasayishi</li>
+                    </ul>
+                </div>
+
+                <div class="impact-card warning">
+                    <div class="impact-title">⚠️ Ehtiyot Choralari</div>
+                    <ul style="margin-left: 20px; line-height: 1.6;">
+                        <li>Shamol tezligi o'rtacha - qo'shimcha quruqlik</li>
+                        <li>UV radiatsiya yuqori - o'simlik stressi</li>
+                        <li>Harorat o'zgaruvchan</li>
+                        <li>Tunda namlik kondensatsiyasi kam</li>
+                    </ul>
+                </div>
+
+                <div class="impact-card">
+                    <div class="impact-title">✅ Ijobiy Jihatlar</div>
+                    <ul style="margin-left: 20px; line-height: 1.6;">
+                        <li>Fotosintez uchun yetarli yorug'lik</li>
+                        <li>Havo bosimi barqaror</li>
+                        <li>Shamol yo'nalishi doimiy</li>
+                        <li>Tuman va don yo'q</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Weather Recommendations -->
+        <div class="panel" style="background: linear-gradient(135deg, rgba(0, 255, 135, 0.1), rgba(96, 239, 255, 0.1)); border: 2px solid rgba(0, 255, 135, 0.3);">
+            <h2>🧠 AI Ob-havo Tavsiyalari</h2>
+
+            <div style="background: rgba(255, 65, 108, 0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff416c;">
+                <h3 style="color: #ff416c; margin-bottom: 15px;">⚡ Tezkor Tavsiyalar</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong style="color: #ff416c;">🕐 Optimal sug'orish vaqti:</strong><br>
+                        <span style="opacity: 0.9;">Ertalab 6:00-8:00 yoki kechqurun 18:00-20:00</span>
+                    </div>
+                    <div>
+                        <strong style="color: #ff416c;">💧 Sug'orish miqdori:</strong><br>
+                        <span style="opacity: 0.9;">20-25 litr/m² (odatdagidan 30% ko'p)</span>
+                    </div>
+                    <div>
+                        <strong style="color: #ff416c;">🛡️ Himoya choralari:</strong><br>
+                        <span style="opacity: 0.9;">Mulch (qoplama) ishlatish tavsiya etiladi</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: rgba(255, 154, 0, 0.1); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff9a00;">
+                <h3 style="color: #ff9a00; margin-bottom: 15px;">🌧️ Yomg'ir Kutilayotgan Kunlar</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Payshanba:</strong> 60% ehtimol, 8-12mm
+                    </div>
+                    <div>
+                        <strong>Yakshanba:</strong> 40% ehtimol, 5-8mm
+                    </div>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.9;">
+                    <strong>AI tavsiyasi:</strong> Bu kunlarda sug'orish rejasini kamaytiring.
+                </p>
+            </div>
+
+            <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 20px; border-left: 4px solid #00ff87;">
+                <h3 style="color: #00ff87; margin-bottom: 15px;">📈 Uzoq Muddatli Strategiya</h3>
+                <ul style="margin-left: 20px; line-height: 1.6;">
+                    <li>Keyingi 7 kunda 2 marta yomg'ir kutilayapti</li>
+                    <li>Umumiy yomg'ir miqdori: ~18mm (kam)</li>
+                    <li>Qo'shimcha sug'orish rejasi tayyorlang</li>
+                    <li>Suv tejash texnologiyalarini qo'llang</li>
+                    <li>O'simlik stress belgilarini kuzating</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Weather Map and Radar -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+            <div class="panel">
+                <h2>🗺️ Ob-havo Xaritasi</h2>
+                <div class="weather-map">
+                    <div>
+                        <div class="map-placeholder">🌍</div>
+                        <p style="margin-top: 15px; opacity: 0.8;">
+                            Interactive ob-havo xaritasi<br>
+                            <small style="opacity: 0.6;">(Real loyihada satellite ma'lumotlar)</small>
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9rem;">
+                    <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        <strong>🌡️ Harorat zonasi:</strong> Normal
+                    </div>
+                    <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        <strong>🌧️ Yomg'ir zonasi:</strong> Quruq
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📡 Doppler Radar</h2>
+                <div class="weather-map">
+                    <div>
+                        <div class="map-placeholder">📡</div>
+                        <p style="margin-top: 15px; opacity: 0.8;">
+                            Real vaqt yomg'ir radari<br>
+                            <small style="opacity: 0.6;">(50km radiusda hech qanday faollik yo'q)</small>
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9rem;">
+                    <div style="padding: 8px; background: rgba(0,255,135,0.1); border-radius: 5px;">
+                        <strong>✅ Status:</strong> Faol monitoring
+                    </div>
+                    <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        <strong>⏱️ Yangilanish:</strong> 5 daq. oldin
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Weather Data -->
+        <div class="panel">
+            <h2>📊 Tarixiy Ma'lumotlar Taqqoslash</h2>
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px;">
+                <h3 style="color: #60efff; margin-bottom: 15px;">Shu kuni o'tgan yillarda:</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 10px;">📅 2023</div>
+                        <div>Harorat: 22°C | Yomg'ir: 5mm</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 10px;">📅 2022</div>
+                        <div>Harorat: 26°C | Yomg'ir: 0mm</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 10px;">📅 2021</div>
+                        <div>Harorat: 24°C | Yomg'ir: 12mm</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(0,255,135,0.1); border-radius: 8px; border: 2px solid rgba(0,255,135,0.3);">
+                        <div style="font-size: 1.5rem; margin-bottom: 10px;">📅 2024</div>
+                        <div><strong>Harorat: 24°C | Yomg'ir: 0mm</strong></div>
+                        <div style="font-size: 0.8rem; margin-top: 5px; color: #00ff87;">(Bugun)</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(96, 239, 255, 0.1); border-radius: 8px; border-left: 4px solid #60efff;">
+                    <strong style="color: #60efff;">📈 Tendensiya:</strong>
+                    <span style="opacity: 0.9;">Bu hafta harorat o'tgan yillarga nisbatan normal, ammo yomg'ir kamroq.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time weather data simulation
+        function updateWeatherData() {
+            const temp = Math.floor(Math.random() * 6) + 21; // 21-27°C
+            const humidity = Math.floor(Math.random() * 15) + 40; // 40-55%
+            const wind = Math.floor(Math.random() * 8) + 8; // 8-16 km/h
+            const pressure = Math.floor(Math.random() * 20) + 1005; // 1005-1025 hPa
+            const solar = Math.floor(Math.random() * 200) + 750; // 750-950 W/m²
+            const visibility = Math.floor(Math.random() * 10) + 10; // 10-20 km
+            const dewPoint = Math.floor(Math.random() * 8) + 8; // 8-16°C
+
+            // Update current weather values
+            document.getElementById('currentTemp').textContent = temp + '°C';
+            document.getElementById('currentHumidity').textContent = humidity + '%';
+            document.getElementById('windSpeed').textContent = wind + ' km/h';
+            document.getElementById('pressure').textContent = pressure;
+            document.getElementById('solarRadiation').textContent = solar;
+            document.getElementById('visibility').textContent = visibility;
+            document.getElementById('dewPoint').textContent = dewPoint + '°C';
+
+            // Update weather card classes based on conditions
+            const humidityCard = document.getElementById('currentHumidity').closest('.weather-card');
+            if (humidity < 45) {
+                humidityCard.className = 'weather-card danger';
+            } else if (humidity < 55) {
+                humidityCard.className = 'weather-card warning';
+            } else {
+                humidityCard.className = 'weather-card';
+            }
+
+            // Update rain probability in hourly forecast
+            updateHourlyForecast();
+        }
+
+        function updateHourlyForecast() {
+            const hourlyItems = document.querySelectorAll('.hourly-item');
+            hourlyItems.forEach((item, index) => {
+                const rainChance = Math.floor(Math.random() * 15); // 0-15%
+                const temp = Math.floor(Math.random() * 8) + 18; // 18-26°C
+
+                const tempElement = item.querySelector('.hourly-temp');
+                const rainElement = item.querySelector('div:last-child');
+
+                if (tempElement) tempElement.textContent = temp + '°C';
+                if (rainElement) rainElement.textContent = rainChance + '%';
+
+                // Update icon based on rain chance
+                const iconElement = item.querySelector('.hourly-icon');
+                if (rainChance > 30) {
+                    iconElement.textContent = '🌧️';
+                } else if (rainChance > 15) {
+                    iconElement.textContent = '🌤️';
+                } else if (index < 4) {
+                    iconElement.textContent = '☀️';
+                } else {
+                    iconElement.textContent = '🌙';
+                }
+            });
+        }
+
+        // Chart animation
+        function animateChartBars() {
+            const chartBars = document.querySelectorAll('.chart-bar');
+            chartBars.forEach((bar, index) => {
+                const originalHeight = bar.style.height;
+                bar.style.height = '0px';
+                bar.style.transition = 'height 1s ease';
+
+                setTimeout(() => {
+                    bar.style.height = originalHeight;
+                }, index * 200);
+            });
+        }
+
+        // Weather alerts
+        function checkWeatherAlerts() {
+            const humidity = parseInt(document.getElementById('currentHumidity').textContent);
+            const temp = parseInt(document.getElementById('currentTemp').textContent);
+
+            if (humidity < 45 || temp > 30) {
+                showWeatherAlert();
+            }
+        }
+
+        function showWeatherAlert() {
+            const alert = document.querySelector('.weather-alert');
+            if (alert) {
+                alert.style.animation = 'alertPulse 1.5s infinite';
+            }
+        }
+
+        // Initialize animations and updates
+        setTimeout(() => {
+            animateChartBars();
+        }, 500);
+
+        // Update weather data every 30 seconds
+        setInterval(updateWeatherData, 30000);
+
+        // Initial update
+        updateWeatherData();
+
+        // Chart bar hover effects
+        document.querySelectorAll('.chart-bar').forEach(bar => {
+            bar.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 5px 15px rgba(0, 255, 135, 0.4)';
+            });
+
+            bar.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Hourly forecast scroll
+        const hourlyForecast = document.querySelector('.hourly-forecast');
+        if (hourlyForecast) {
+            hourlyForecast.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                this.scrollLeft += e.deltaY;
+            });
+        }
+    </script>
+</body>
+</html>
