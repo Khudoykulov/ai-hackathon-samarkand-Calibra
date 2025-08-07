@@ -1,254 +1,429 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
-from .models import AIAnalysis, AIModel, AILearningData
-from .serializers import AIAnalysisSerializer, AIModelSerializer, AILearningDataSerializer
-from .predictors import GeminiAIPredictor, IrrigationOptimizer
-from sensor.models import SensorReading, WeatherData, Sensor
+import uuid
+import logging
+
+from .models import AIModel, AIPrediction, AIAnalysisSession, AIInsight
+from .predictors import irrigation_predictor, plant_health_analyzer, gemini_integration
+from sensor.models import Sensor, SensorReading, WeatherData
+from plant.models import Plant
+
+logger = logging.getLogger(__name__)
 
 
-class AIAnalysisViewSet(viewsets.ModelViewSet):
-    queryset = AIAnalysis.objects.all()
-    serializer_class = AIAnalysisSerializer
-
-    @action(detail=False, methods=['post'])
-    def analyze_current_conditions(self, request):
-        """Analyze current sensor and weather conditions"""
-        predictor = GeminiAIPredictor()
-
-        # Get latest sensor data
-        sensor_data = self._get_latest_sensor_data()
-
-        # Get latest weather data
-        weather_data = self._get_latest_weather_data()
-
-        # Perform AI analysis
-        analysis_result = predictor.analyze_irrigation_needs(sensor_data, weather_data)
-
-        # Save analysis to database
-        analysis = AIAnalysis.objects.create(
-            decision=analysis_result['decision'],
-            confidence_level=analysis_result['confidence_level'],
-            confidence_percentage=analysis_result['confidence_percentage'],
-            reasoning=analysis_result['reasoning'],
-            recommendations=analysis_result.get('recommendations', []),
-            soil_moisture=sensor_data.get('soil_moisture', 0),
-            air_temperature=sensor_data.get('air_temperature', 0),
-            air_humidity=sensor_data.get('air_humidity', 0),
-            weather_forecast=weather_data
-        )
-
-        return Response({
-            'analysis_id': analysis.id,
-            'decision': analysis_result['decision'],
-            'confidence_percentage': analysis_result['confidence_percentage'],
-            'confidence_level': analysis_result['confidence_level'],
-            'reasoning': analysis_result['reasoning'],
-            'recommendations': analysis_result.get('recommendations', []),
-            'estimated_duration': analysis_result.get('estimated_duration', 15),
-            'optimal_time': analysis_result.get('optimal_time', 'hozir'),
-            'timestamp': analysis.created_at
-        })
-
-    @action(detail=False, methods=['get'])
-    def recent_decisions(self, request):
-        """Get recent AI decisions"""
-        recent_analyses = AIAnalysis.objects.filter(
-            created_at__gte=timezone.now() - timedelta(hours=24)
-        )[:10]
-
-        decisions = []
-        for analysis in recent_analyses:
-            decisions.append({
-                'id': analysis.id,
-                'decision': analysis.decision,
-                'confidence_percentage': analysis.confidence_percentage,
-                'reasoning': analysis.reasoning[:100] + '...' if len(analysis.reasoning) > 100 else analysis.reasoning,
-                'timestamp': analysis.created_at
-            })
-
-        return Response(decisions)
-
-    @action(detail=False, methods=['get'])
-    def performance_metrics(self, request):
-        """Get AI performance metrics"""
-        end_date = timezone.now()
-        start_date = end_date - timedelta(days=30)
-
-        analyses = AIAnalysis.objects.filter(
-            created_at__gte=start_date
-        )
-
-        total_analyses = analyses.count()
-        if total_analyses == 0:
-            return Response({
-                'total_analyses': 0,
-                'average_confidence': 0,
-                'decision_distribution': {},
-                'accuracy_trend': []
-            })
-
-        # Calculate metrics
-        avg_confidence = sum(a.confidence_percentage for a in analyses) / total_analyses
-
-        # Decision distribution
-        decision_dist = {}
-        for analysis in analyses:
-            decision = analysis.get_decision_display()
-            decision_dist[decision] = decision_dist.get(decision, 0) + 1
-
-        # Mock accuracy trend (in real implementation, this would be based on actual outcomes)
-        accuracy_trend = [
-            {'date': (end_date - timedelta(days=i)).date(), 'accuracy': 85 + (i % 10)}
-            for i in range(7, 0, -1)
-        ]
-
-        return Response({
-            'total_analyses': total_analyses,
-            'average_confidence': round(avg_confidence, 2),
-            'decision_distribution': decision_dist,
-            'accuracy_trend': accuracy_trend,
-            'learning_data_count': AILearningData.objects.count()
-        })
-
-    def _get_latest_sensor_data(self):
-        """Get latest sensor readings"""
-        data = {}
-
-        # Get soil moisture
-        soil_sensor = Sensor.objects.filter(
-            sensor_type__name__icontains='namlik',
-            is_active=True
-        ).first()
-        if soil_sensor:
-            latest_reading = soil_sensor.readings.first()
-            if latest_reading:
-                data['soil_moisture'] = latest_reading.value
-
-        # Get air temperature
-        temp_sensor = Sensor.objects.filter(
-            sensor_type__name__icontains='harorat',
-            is_active=True
-        ).first()
-        if temp_sensor:
-            latest_reading = temp_sensor.readings.first()
-            if latest_reading:
-                data['air_temperature'] = latest_reading.value
-
-        # Get air humidity
-        humidity_sensor = Sensor.objects.filter(
-            sensor_type__name__icontains='havo',
-            is_active=True
-        ).first()
-        if humidity_sensor:
-            latest_reading = humidity_sensor.readings.first()
-            if latest_reading:
-                data['air_humidity'] = latest_reading.value
-
-        # Get pH
-        ph_sensor = Sensor.objects.filter(
-            sensor_type__name__icontains='ph',
-            is_active=True
-        ).first()
-        if ph_sensor:
-            latest_reading = ph_sensor.readings.first()
-            if latest_reading:
-                data['ph_level'] = latest_reading.value
-
-        # Set defaults if no data
-        data.setdefault('soil_moisture', 45)
-        data.setdefault('air_temperature', 24)
-        data.setdefault('air_humidity', 55)
-        data.setdefault('ph_level', 6.8)
-
-        return data
-
-    def _get_latest_weather_data(self):
-        """Get latest weather data"""
+@api_view(['POST'])
+def analyze_irrigation_need(request):
+    """Analyze irrigation need using AI"""
+    try:
+        # Generate FRESH sensor data for analysis
+        sensors_data = {}
+        
+        # Collect data from all active sensors - generate new readings
+        sensors = Sensor.objects.filter(status='active')
+        for sensor in sensors:
+            # Generate new random reading for fresh AI analysis
+            fresh_reading = SensorReading.generate_random_reading(sensor)
+            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+            sensors_data[sensor_key] = fresh_reading.value
+        
+        # Get or generate fresh weather data
         latest_weather = WeatherData.objects.first()
+        weather_data = {}
         if latest_weather:
-            return {
+            weather_data = {
+                'temperature': latest_weather.temperature,
+                'humidity': latest_weather.humidity,
+                'rainfall_forecast': latest_weather.rainfall,
+                'wind_speed': latest_weather.wind_speed,
+                'pressure': latest_weather.pressure,
+                'feels_like_temperature': latest_weather.feels_like_temperature,
+                'uv_index': latest_weather.uv_index,
+                'air_quality_index': latest_weather.air_quality_index,
+                'wind_gust': latest_weather.wind_gust
+            }
+        else:
+            # Generate mock weather data if none exists
+            import random
+            weather_data = {
+                'temperature': random.uniform(20, 32),
+                'humidity': random.uniform(40, 75),
+                'rainfall_forecast': random.uniform(0, 10) if random.random() < 0.3 else 0,
+                'wind_speed': random.uniform(5, 20),
+                'pressure': random.uniform(1010, 1025),
+                'feels_like_temperature': random.uniform(18, 35),
+                'uv_index': random.uniform(1, 11),
+                'air_quality_index': random.randint(1, 5),
+                'wind_gust': random.uniform(10, 30) if random.random() < 0.5 else None
+            }
+        
+        # Get plant data
+        plants = Plant.objects.all()
+        plant_data = {
+            'total_plants': plants.count(),
+            'average_health': plants.filter(health_status__in=['excellent', 'good']).count() / max(1, plants.count()) * 100
+        }
+        
+        # Run AI prediction
+        prediction_result = irrigation_predictor.predict_irrigation_need(
+            sensors_data, weather_data, plant_data
+        )
+        
+        # Save prediction to database
+        if not prediction_result.get('error'):
+            ai_model, created = AIModel.objects.get_or_create(
+                model_type='irrigation_predictor',
+                defaults={'name': 'Irrigation Predictor', 'accuracy': 94.2}
+            )
+            
+            AIPrediction.objects.create(
+                model=ai_model,
+                prediction_type='irrigation_need',
+                input_data={
+                    'sensors': sensors_data,
+                    'weather': weather_data,
+                    'plants': plant_data
+                },
+                prediction_value=prediction_result.get('irrigation_score', 0),
+                confidence_score=prediction_result.get('confidence_score', 0),
+                confidence_level='high' if prediction_result.get('confidence_score', 0) > 80 else 'medium',
+                recommendation=prediction_result.get('recommendation', ''),
+                reasoning=prediction_result.get('reasoning', '')
+            )
+        
+        return Response(prediction_result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"AI irrigation analysis error: {e}")
+        return Response({
+            'error': str(e),
+            'message': 'AI tahlil xatosi yuz berdi'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def analyze_plant_health(request):
+    """Analyze plant health using AI"""
+    try:
+        plant_id = request.data.get('plant_id')
+        
+        if plant_id:
+            try:
+                plant = Plant.objects.get(id=plant_id)
+            except Plant.DoesNotExist:
+                return Response({'error': 'Plant not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            plant = Plant.objects.first()  # Analyze first plant if none specified
+        
+        if not plant:
+            return Response({'error': 'No plants found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Generate FRESH sensor data for plant health analysis
+        sensors_data = {}
+        sensors = Sensor.objects.filter(status='active')
+        for sensor in sensors:
+            # Generate new random reading for fresh AI analysis
+            fresh_reading = SensorReading.generate_random_reading(sensor)
+            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+            sensors_data[sensor_key] = fresh_reading.value
+        
+        # Get plant data
+        plant_data = {
+            'days_since_planted': plant.days_since_planted,
+            'height': plant.height or 0,
+            'growth_stage': plant.growth_stage,
+            'health_status': plant.health_status,
+            'leaf_count': plant.leaf_count or 0
+        }
+        
+        # Get historical data (mock for now)
+        historical_data = []
+        
+        # Run AI analysis
+        health_result = plant_health_analyzer.analyze_plant_health(
+            sensors_data, plant_data, historical_data
+        )
+        
+        # Save analysis results
+        if not health_result.get('error'):
+            ai_model, created = AIModel.objects.get_or_create(
+                model_type='plant_health',
+                defaults={'name': 'Plant Health Analyzer', 'accuracy': 89.5}
+            )
+            
+            AIPrediction.objects.create(
+                model=ai_model,
+                prediction_type='plant_health_risk',
+                input_data={
+                    'sensors': sensors_data,
+                    'plant': plant_data
+                },
+                prediction_value=health_result.get('overall_health_score', 0) / 100,
+                confidence_score=85.0,  # Mock confidence
+                confidence_level='high',
+                recommendation='; '.join(health_result.get('recommendations', [])),
+                reasoning=f"Plant health analysis for {plant.name}"
+            )
+        
+        return Response(health_result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Plant health analysis error: {e}")
+        return Response({
+            'error': str(e),
+            'message': 'O\'simlik sog\'ligi tahlili xatosi'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def comprehensive_analysis(request):
+    """Comprehensive AI analysis using Gemini"""
+    try:
+        # Start analysis session
+        session_id = str(uuid.uuid4())[:8]
+        session = AIAnalysisSession.objects.create(
+            session_id=session_id,
+            session_type='manual',
+            input_sensors=[],
+            recommendations=[],
+            critical_alerts=[]
+        )
+        
+        # Collect all data with FRESH sensor readings
+        sensors_data = {}
+        sensors = Sensor.objects.filter(status='active')
+        for sensor in sensors:
+            # Generate new random reading for comprehensive AI analysis
+            fresh_reading = SensorReading.generate_random_reading(sensor)
+            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+            sensors_data[sensor_key] = fresh_reading.value
+        
+        # Get or generate fresh weather data for comprehensive analysis
+        latest_weather = WeatherData.objects.first()
+        weather_data = {}
+        if latest_weather:
+            weather_data = {
                 'temperature': latest_weather.temperature,
                 'humidity': latest_weather.humidity,
                 'rainfall': latest_weather.rainfall,
                 'wind_speed': latest_weather.wind_speed,
-                'solar_radiation': latest_weather.solar_radiation,
-                'pressure': latest_weather.pressure
+                'weather_condition': latest_weather.weather_condition,
+                'feels_like_temperature': latest_weather.feels_like_temperature,
+                'uv_index': latest_weather.uv_index,
+                'air_quality_index': latest_weather.air_quality_index,
+                'pressure': latest_weather.pressure,
+                'wind_gust': latest_weather.wind_gust,
+                'cloud_coverage': latest_weather.cloud_coverage
             }
-
-        # Default weather data
-        return {
-            'temperature': 24,
-            'humidity': 55,
-            'rainfall': 0,
-            'wind_speed': 12,
-            'solar_radiation': 850,
-            'pressure': 1013
+        else:
+            # Generate fresh mock weather data
+            import random
+            weather_data = {
+                'temperature': random.uniform(20, 32),
+                'humidity': random.uniform(40, 75),
+                'rainfall': random.uniform(0, 10) if random.random() < 0.3 else 0,
+                'wind_speed': random.uniform(5, 20),
+                'weather_condition': random.choice(['Clear', 'Partly Cloudy', 'Cloudy', 'Rain']),
+                'feels_like_temperature': random.uniform(18, 35),
+                'uv_index': random.uniform(1, 11),
+                'air_quality_index': random.randint(1, 5),
+                'pressure': random.uniform(1010, 1025),
+                'wind_gust': random.uniform(10, 30) if random.random() < 0.5 else None,
+                'cloud_coverage': random.randint(0, 100)
+            }
+        
+        # Plant data
+        plants = Plant.objects.all()
+        plant_data = {
+            'total_plants': plants.count(),
+            'healthy_plants': plants.filter(health_status__in=['excellent', 'good']).count(),
+            'plants_needing_attention': plants.filter(health_status__in=['fair', 'poor', 'critical']).count()
         }
-
-
-class AIModelViewSet(viewsets.ModelViewSet):
-    queryset = AIModel.objects.all()
-    serializer_class = AIModelSerializer
-
-    @action(detail=False, methods=['get'])
-    def current_model(self, request):
-        """Get current active AI model information"""
-        active_model = AIModel.objects.filter(is_active=True).first()
-
-        if not active_model:
-            # Create default model if none exists
-            active_model = AIModel.objects.create(
-                name='Gemini AI Irrigation Model',
-                version='1.0',
-                description='AI model for irrigation decision making using Gemini API',
-                accuracy_percentage=87,
-                training_data_count=15847,
-                is_active=True
-            )
-
-        return Response({
-            'id': active_model.id,
-            'name': active_model.name,
-            'version': active_model.version,
-            'accuracy_percentage': active_model.accuracy_percentage,
-            'training_data_count': active_model.training_data_count,
-            'last_trained': active_model.last_trained,
-            'learning_progress': {
-                'data_collection': 78,
-                'model_training': 87,
-                'accuracy_validation': 94
-            }
-        })
-
-
-class AILearningDataViewSet(viewsets.ModelViewSet):
-    queryset = AILearningData.objects.all()
-    serializer_class = AILearningDataSerializer
-
-    @action(detail=False, methods=['post'])
-    def add_learning_data(self, request):
-        """Add new learning data point"""
-        data = request.data
-
-        learning_data = AILearningData.objects.create(
-            soil_moisture=data.get('soil_moisture', 0),
-            air_temperature=data.get('air_temperature', 0),
-            air_humidity=data.get('air_humidity', 0),
-            ph_level=data.get('ph_level', 7.0),
-            rainfall=data.get('rainfall', 0),
-            solar_radiation=data.get('solar_radiation', 0),
-            wind_speed=data.get('wind_speed', 0),
-            irrigation_applied=data.get('irrigation_applied', False),
-            irrigation_duration=data.get('irrigation_duration', 0),
-            plant_health_score=data.get('plant_health_score'),
-            water_efficiency=data.get('water_efficiency')
+        
+        # Historical trends (mock)
+        historical_trends = {
+            'irrigation_frequency': 'Haftada 4 marta',
+            'water_usage_trend': 'So\'ngi haftada 15% kamaydi',
+            'plant_growth_rate': 'Normal'
+        }
+        
+        # Foydalanuvchi parametrlarini olish
+        field_params = request.data.get('field_parameters', {})
+        plant_params = request.data.get('plant_parameters', {})
+        
+        # Run Gemini analysis
+        gemini_result = gemini_integration.analyze_comprehensive_data(
+            sensors_data, weather_data, plant_data, historical_trends,
+            field_params, plant_params
         )
-
+        
+        # Update session with results
+        session.status = 'completed'
+        session.completed_at = timezone.now()
+        session.predictions_generated = 1
+        session.recommendations = gemini_result.get('action_plan', [])
+        
+        # Check for critical alerts
+        if sensors_data.get('soil_moisture', 50) < 25:
+            session.critical_alerts.append({
+                'type': 'critical_soil_moisture',
+                'message': 'Tuproq namligi kritik darajada',
+                'timestamp': timezone.now().isoformat()
+            })
+        
+        session.save()
+        
+        # Create insights
+        insights = gemini_result.get('insights', [])
+        for insight_data in insights:
+            AIInsight.objects.create(
+                insight_type='pattern_discovery',
+                title=insight_data.get('title', 'AI Insight'),
+                description=insight_data.get('description', ''),
+                importance_level=insight_data.get('priority', 'medium'),
+                supporting_data={'session_id': session_id},
+                confidence_level=gemini_result.get('confidence_score', 85)
+            )
+        
         return Response({
-            'id': learning_data.id,
-            'message': 'Learning data added successfully',
-            'timestamp': learning_data.timestamp
-        })
+            'session_id': session_id,
+            'analysis_result': gemini_result,
+            'session_status': session.status,
+            'critical_alerts': session.critical_alerts,
+            'recommendations': session.recommendations
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Comprehensive AI analysis error: {e}")
+        if 'session' in locals():
+            session.status = 'failed'
+            session.completed_at = timezone.now()
+            session.save()
+        
+        return Response({
+            'error': str(e),
+            'message': 'Keng qamrovli AI tahlili xatosi'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_ai_insights(request):
+    """Get latest AI insights"""
+    try:
+        # Get recent insights
+        insights = AIInsight.objects.all()[:10]
+        
+        insights_data = []
+        for insight in insights:
+            insights_data.append({
+                'id': insight.id,
+                'type': insight.get_insight_type_display(),
+                'title': insight.title,
+                'description': insight.description,
+                'importance': insight.get_importance_level_display(),
+                'confidence': insight.confidence_level,
+                'created_at': insight.created_at,
+                'recommended_actions': insight.recommended_actions,
+                'is_implemented': insight.is_implemented
+            })
+        
+        return Response(insights_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_ai_model_status(request):
+    """Get AI model status and performance"""
+    try:
+        models = AIModel.objects.filter(is_active=True)
+        
+        models_data = []
+        for model in models:
+            recent_predictions = AIPrediction.objects.filter(model=model)[:100]
+            
+            models_data.append({
+                'id': model.id,
+                'name': model.name,
+                'type': model.get_model_type_display(),
+                'version': model.version,
+                'accuracy': model.accuracy,
+                'last_trained': model.last_trained,
+                'recent_predictions': recent_predictions.count(),
+                'average_confidence': round(
+                    sum([p.confidence_score for p in recent_predictions[:10]]) / max(1, len(recent_predictions[:10])), 1
+                )
+            })
+        
+        return Response(models_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_analysis_history(request):
+    """Get AI analysis session history"""
+    try:
+        sessions = AIAnalysisSession.objects.all()[:20]
+        
+        sessions_data = []
+        for session in sessions:
+            sessions_data.append({
+                'session_id': session.session_id,
+                'type': session.get_session_type_display(),
+                'status': session.get_status_display(),
+                'started_at': session.started_at,
+                'completed_at': session.completed_at,
+                'duration_minutes': round(session.duration_minutes, 1),
+                'predictions_generated': session.predictions_generated,
+                'critical_alerts_count': len(session.critical_alerts),
+                'recommendations_count': len(session.recommendations)
+            })
+        
+        return Response(sessions_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def train_model(request):
+    """Mock training endpoint for AI models"""
+    try:
+        model_type = request.data.get('model_type', 'irrigation_predictor')
+        
+        # Simulate training process
+        ai_model, created = AIModel.objects.get_or_create(
+            model_type=model_type,
+            defaults={'name': f'{model_type.title()} Model'}
+        )
+        
+        # Mock training improvement
+        import random
+        improvement = random.uniform(0.5, 2.0)
+        ai_model.accuracy = min(99.9, ai_model.accuracy + improvement)
+        ai_model.training_data_count += random.randint(100, 500)
+        ai_model.last_trained = timezone.now()
+        ai_model.save()
+        
+        return Response({
+            'message': f'{ai_model.name} muvaffaqiyatli qayta o\'qitildi',
+            'new_accuracy': round(ai_model.accuracy, 1),
+            'training_data_count': ai_model.training_data_count,
+            'improvement': round(improvement, 1)
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

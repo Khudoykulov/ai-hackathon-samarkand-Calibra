@@ -1,12 +1,12 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import AIAnalysisViewSet, AIModelViewSet, AILearningDataViewSet
-
-router = DefaultRouter()
-router.register(r'analysis', AIAnalysisViewSet)
-router.register(r'models', AIModelViewSet)
-router.register(r'learning', AILearningDataViewSet)
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('analyze-irrigation/', views.analyze_irrigation_need, name='analyze-irrigation'),
+    path('analyze-plant-health/', views.analyze_plant_health, name='analyze-plant-health'),
+    path('comprehensive-analysis/', views.comprehensive_analysis, name='comprehensive-analysis'),
+    path('insights/', views.get_ai_insights, name='ai-insights'),
+    path('models/status/', views.get_ai_model_status, name='ai-model-status'),
+    path('analysis-history/', views.get_analysis_history, name='analysis-history'),
+    path('train-model/', views.train_model, name='train-model'),
 ]
