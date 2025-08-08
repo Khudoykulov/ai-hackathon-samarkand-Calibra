@@ -448,13 +448,8 @@ class GeminiIntegration:
             dict: Comprehensive AI analysis from REAL Gemini ONLY
         """
         if not self.use_real_api:
-            logger.error("❌ GEMINI AI API KEY REQUIRED - NO FALLBACK ALLOWED")
-            return {
-                'error': 'GEMINI_API_KEY_REQUIRED',
-                'message': 'Real Gemini AI API key is required. No mock data allowed.',
-                'required_action': 'Set GEMINI_API_KEY in .env file',
-                'source': 'API_KEY_MISSING'
-            }
+            logger.warning("⚠️ GEMINI AI API key is missing or invalid - using fallback analysis")
+            return self._fallback_gemini_analysis(all_sensor_data, weather_data, plant_data, historical_trends)
         
         try:
             # Build comprehensive analysis prompt
@@ -489,18 +484,10 @@ class GeminiIntegration:
             }
             
         except Exception as e:
-            logger.error(f"❌ Gemini AI API FAILED - NO FALLBACK ALLOWED: {e}")
+            logger.error(f"❌ Gemini AI API failed: {e} - using fallback analysis")
             
-            # NO FALLBACK - Return error only
-            return {
-                'error': f'REAL_GEMINI_API_FAILED: {str(e)}',
-                'message': 'Gemini AI API call failed. No fallback data available.',
-                'required_action': 'Check internet connection and API key validity',
-                'confidence_score': 0,
-                'source': 'API_CALL_FAILED',
-                'analysis_timestamp': timezone.now().isoformat(),
-                'api_error_details': str(e)
-            }
+            # Fallback analysis when API fails
+            return self._fallback_gemini_analysis(all_sensor_data, weather_data, plant_data, historical_trends)
     
     def _build_analysis_prompt(self, sensor_data: Dict, weather_data: Dict,
                               plant_data: Dict, historical_trends: Dict, 
@@ -745,6 +732,30 @@ class GeminiIntegration:
         except Exception as e:
             logger.error(f"Error parsing Gemini response: {e}")
             return self._mock_gemini_analysis(sensor_data, weather_data)
+
+    def _fallback_gemini_analysis(self, sensor_data: Dict, weather_data: Dict, 
+                                 plant_data: Dict, historical_trends: Dict) -> Dict:
+        """Fallback analysis when Gemini API is unavailable"""
+        logger.info("🔄 Using fallback analysis due to API unavailability")
+        
+        # Enhanced fallback analysis
+        result = self._mock_gemini_analysis(sensor_data, weather_data)
+        
+        # Mark as fallback
+        result['source'] = 'FALLBACK_ANALYSIS'
+        result['message'] = 'AI tahlil ma\'lumotlarini yuklashda xatolik - asosiy tahlil funksiyasi ishlatilmoqda'
+        result['api_status'] = 'unavailable'
+        
+        return {
+            'gemini_analysis': result,
+            'insights': self._extract_insights(result),
+            'action_plan': self._generate_action_plan(result),
+            'confidence_score': result.get('confidence_level', 75),
+            'analysis_timestamp': timezone.now().isoformat(),
+            'source': 'FALLBACK_ANALYSIS',
+            'model': 'local_fallback_analysis',
+            'message': 'Gemini AI API ishlamadi - mahalliy tahlil ishlatilmoqda'
+        }
 
     def _mock_gemini_analysis(self, sensor_data: Dict, weather_data: Dict) -> Dict:
         """Enhanced mock Gemini AI response with comprehensive analysis"""

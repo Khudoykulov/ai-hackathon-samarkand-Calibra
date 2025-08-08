@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sug'orish - AI Tahlil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 0;
+        }
+
+        .nav-links a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #00ff87;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+
+        .ai-decision-panel {
+            background: linear-gradient(135deg, rgba(0, 255, 135, 0.1), rgba(96, 239, 255, 0.1));
+            border: 2px solid rgba(0, 255, 135, 0.3);
+        }
+
+        .decision-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .decision-card.critical {
+            background: rgba(255, 65, 108, 0.2);
+            border-left: 4px solid #ff416c;
+            animation: pulse 2s infinite;
+        }
+
+        .decision-card.warning {
+            background: rgba(255, 154, 0, 0.2);
+            border-left: 4px solid #ff9a00;
+        }
+
+        .decision-card.normal {
+            background: rgba(0, 255, 135, 0.2);
+            border-left: 4px solid #00ff87;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 65, 108, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 65, 108, 0.8); }
+        }
+
+        .decision-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .decision-text {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .ai-metrics {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .metric-line {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-label {
+            color: #60efff;
+        }
+
+        .metric-value {
+            font-weight: bold;
+        }
+
+        .metric-value.critical { color: #ff416c; }
+        .metric-value.warning { color: #ff9a00; }
+        .metric-value.good { color: #00ff87; }
+
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendations-list li {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #60efff;
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3.5s forwards;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: 2px solid #ff416c;
+        }
+
+        .notification.warning {
+            background: linear-gradient(45deg, #ff9a00, #ffcd00);
+            border: 2px solid #ff9a00;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border: 2px solid #00ff87;
+        }
+
+        .notification.info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: 2px solid #667eea;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        .progress-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#00ff87 0deg, #00ff87 0deg, rgba(255,255,255,0.2) 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #60efff;
+        }
+
+        .insight-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #60efff;
+        }
+
+        .insight-description {
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        /* Form Styles */
+        .config-form {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #60efff;
+            font-size: 0.95rem;
+        }
+
+        .form-select, .form-input {
+            padding: 12px 15px;
+            border: 2px solid rgba(96, 239, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: #60efff;
+            box-shadow: 0 0 10px rgba(96, 239, 255, 0.3);
+        }
+
+        .form-select option {
+            background: #1e3c72;
+            color: white;
+            padding: 10px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span>🤖</span>
+                AI Sug'orish Tizimi
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">🏠 Dashboard</a></li>
+                <li><a href="/weather.html">🌤️ Ob-havo</a></li>
+                <li><a href="/sensors.html">📡 Datchilar</a></li>
+                <li><a href="/ai.html" class="active">🧠 AI Tahlil</a></li>
+                <li><a href="/settings.html">⚙️ Sozlamalar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- AI Configuration Form -->
+        <div class="panel">
+            <h2>⚙️ AI Tahlil Sozlamalari</h2>
+            
+            <div class="config-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plantType">🌱 O'simlik Turi:</label>
+                        <select id="plantType" class="form-select">
+                            <option value="tomato">🍅 Pomidor</option>
+                            <option value="cucumber">🥒 Bodring</option>
+                            <option value="pepper">🌶️ Qalampir</option>
+                            <option value="lettuce">🥬 Salat</option>
+                            <option value="wheat">🌾 Bug'doy</option>
+                            <option value="corn">🌽 Jo'xori</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fieldArea">📐 Yer Maydoni (m²):</label>
+                        <input type="number" id="fieldArea" class="form-input" value="100" min="1" max="10000">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="irrigationSystem">💧 Sug'orish Tizimi:</label>
+                        <select id="irrigationSystem" class="form-select">
+                            <option value="drip">💧 Tomchilatib sug'orish</option>
+                            <option value="sprinkler">🚿 Purkagichli</option>
+                            <option value="flood">🌊 Suv bosish</option>
+                            <option value="micro">🔬 Mikro sug'orish</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="soilType">🌍 Tuproq Turi:</label>
+                        <select id="soilType" class="form-select">
+                            <option value="clay">Loysimon</option>
+                            <option value="sandy">Qumli</option>
+                            <option value="loam">Qora tuproq</option>
+                            <option value="silt">Changsimon</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="action-btn primary" onclick="runCustomAIAnalysis()">🧠 AI Tahlil Boshlash</button>
+                    <button class="action-btn" onclick="resetForm()">🔄 Qayta Tiklash</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Decision Panel -->
+        <div class="panel ai-decision-panel">
+            <h2>🧠 AI Real-time Qaror</h2>
+            
+            <div id="aiDecisionCard" class="decision-card">
+                <div id="aiDecisionTitle" class="decision-title">
+                    🔄 AI Tahlil natijasi yuklanmoqda...
+                </div>
+                <div id="aiDecisionText" class="decision-text">
+                    AI tizimi barcha sensor va ob-havo ma'lumotlarini tahlil qilmoqda. Iltimos, kuting...
+                </div>
+                
+                <div id="aiMetrics" class="ai-metrics">
+                    <div class="metric-line">
+                        <span class="metric-label">TAHLIL HOLATI:</span>
+                        <span id="analysisStatus" class="metric-value">JARAYONDA</span>
+                    </div>
+                    <div class="metric-line">
+                        <span class="metric-label">ISHONCH DARAJASI:</span>
+                        <span id="confidenceLevel" class="metric-value">-%</span>
+                    </div>
+                    <div class="metric-line">
+                        <span class="metric-label">TAVSIYA PRIORITETI:</span>
+                        <span id="priorityLevel" class="metric-value">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span class="metric-label">OXIRGI YANGILANISH:</span>
+                        <span id="lastAnalysis" class="metric-value">-</span>
+                    </div>
+                </div>
+
+                <div id="aiActions" class="ai-actions">
+                    <button class="action-btn" onclick="triggerAIAnalysis()">🔄 Yangi Tahlil</button>
+                    <button class="action-btn" onclick="loadAIData()">📊 Ma'lumotni Yangilash</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Analysis Details -->
+        <div class="grid-2">
+            <div class="panel">
+                <h2>📊 AI Tavsiyalar</h2>
+                <ul id="aiRecommendations" class="recommendations-list">
+                    <li>AI tavsiyalari yuklanmoqda...</li>
+                </ul>
+            </div>
+
+            <div class="panel">
+                <h2>🎯 AI Aniqlik</h2>
+                <div style="text-align: center;">
+                    <div id="aiAccuracyCircle" class="progress-circle">-%</div>
+                    <div style="opacity: 0.8;">Model Aniqligi</div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="metric-line">
+                        <span>Model versiyasi:</span>
+                        <span id="modelVersion">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span>Oxirgi o'qitish:</span>
+                        <span id="lastTraining">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span>Tahlil soni:</span>
+                        <span id="analysisCount">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="panel">
+            <h2>💡 AI Tushunchalari</h2>
+            <div id="aiInsights" class="insights-grid">
+                <!-- AI insights will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AI page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧠 AI Analysis page initialized');
+            loadAIData();
+            
+            // Auto refresh every 30 seconds
+            setInterval(loadAIData, 30000);
+        });
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = '';
+            switch(type) {
+                case 'error': icon = '❌ '; break;
+                case 'warning': icon = '⚠️ '; break;
+                case 'success': icon = '✅ '; break;
+                case 'info': icon = 'ℹ️ '; break;
+            }
+            
+            notification.innerHTML = `${icon}${message}`;
+            notification.addEventListener('click', () => notification.remove());
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
+        }
+
+        // Load AI data with STRICT ERROR HANDLING - QATTIQ RIOYA QIL
+        async function loadAIData() {
+            try {
+                showNotification('AI tahlil ma\'lumotlari yuklanmoqda...', 'info');
+                
+                const response = await fetch('/api/ai/comprehensive-analysis/', {
+                    method: 'POST'
+                });
+                
+                // ❌ STRICT API ERROR CHECK - Gemini API ishlamasa qat'iq feedback
+                if (!response.ok) {
+                    showStrictAIError(`HTTP ${response.status}: Gemini API ishlamayapti`);
+                    showNotification(`❌ AI API xatolik ${response.status}: Gemini API ulanishmadi`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // ❌ STRICT DATA VALIDATION - xatolik bo'lsa darhol "-" ko'rsatish
+                if (data.error || !data.analysis_result || data.source === 'FALLBACK_ANALYSIS') {
+                    const errorMsg = data.error || 'Gemini AI API ishlamayapti - fallback rejim';
+                    showStrictAIError(errorMsg);
+                    showNotification(`❌ AI xatolik: ${errorMsg}`, 'error');
+                    return;
+                }
+                
+                updateAIDisplay(data.analysis_result);
+                showNotification('✅ AI tahlil ma\'lumotlari yangilandi (Gemini API)', 'success');
+                
+            } catch (error) {
+                console.error('AI network error:', error);
+                showStrictAIError('Network xatolik: Gemini API ga ulanib bo\'lmadi');
+                showNotification('❌ Network xatolik: AI ma\'lumotlarini yuklab bo\'lmadi', 'error');
+            }
+        }
+
+        // STRICT AI ERROR DISPLAY - barcha ma'lumotlar "-" bo'ladi
+        function showStrictAIError(errorMessage) {
+            console.error('🚨 AI STRICT ERROR:', errorMessage);
+            
+            // Barcha AI ma'lumotlari "-" ga o'zgartiriladi - QATTIQ RIOYA
+            document.getElementById('aiDecisionTitle').innerHTML = '❌ AI Xatolik';
+            document.getElementById('aiDecisionText').textContent = 'Gemini AI API ishlamayapti. Ma\'lumot topilmadi.';
+            document.getElementById('aiDecisionCard').className = 'decision-card critical';
+            
+            // Metrics - barcha "-"
+            document.getElementById('analysisStatus').textContent = '-';
+            document.getElementById('analysisStatus').className = 'metric-value critical';
+            document.getElementById('confidenceLevel').textContent = '-%';
+            document.getElementById('confidenceLevel').className = 'metric-value critical';
+            document.getElementById('priorityLevel').textContent = '-';
+            document.getElementById('priorityLevel').className = 'metric-value critical';
+            document.getElementById('lastAnalysis').textContent = '-';
+            
+            // Recommendations - "-"
+            document.getElementById('aiRecommendations').innerHTML = '<li>AI tavsiyalar yuklanmadi - Gemini API xatoligi</li>';
+            
+            // Accuracy circle - "-"
+            document.getElementById('aiAccuracyCircle').textContent = '-%';
+            document.getElementById('aiAccuracyCircle').style.background = 'conic-gradient(#ff416c 0deg, rgba(255,255,255,0.2) 0deg)';
+            
+            // Model info - barcha "-"
+            document.getElementById('modelVersion').textContent = '-';
+            document.getElementById('lastTraining').textContent = '-';
+            document.getElementById('analysisCount').textContent = '-';
+            
+            // Insights - xatolik
+            document.getElementById('aiInsights').innerHTML = '<div class="insight-card"><div class="insight-title">❌ Xatolik</div><div class="insight-description">Gemini AI API ma\'lumotlari yuklanmadi</div></div>';
+        }
+
+        // Custom AI Analysis with user parameters
+        async function runCustomAIAnalysis() {
+            const plantType = document.getElementById('plantType').value;
+            const fieldArea = document.getElementById('fieldArea').value;
+            const irrigationSystem = document.getElementById('irrigationSystem').value;
+            const soilType = document.getElementById('soilType').value;
+            
+            showNotification(`🧠 Maxsus AI tahlil: ${plantType}, ${fieldArea}m², ${irrigationSystem}`, 'info');
+            
+            try {
+                const response = await fetch('/api/ai/comprehensive-analysis/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        plant_type: plantType,
+                        field_area: parseInt(fieldArea),
+                        irrigation_system: irrigationSystem,
+                        soil_type: soilType,
+                        custom_analysis: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    showStrictAIError(`Custom Analysis HTTP ${response.status}: Gemini API xatolik`);
+                    showNotification(`❌ Maxsus AI tahlil xatolik: ${response.status}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.error || !data.analysis_result) {
+                    showStrictAIError('Custom Analysis: Gemini API ma\'lumot bermadi');
+                    showNotification('❌ Maxsus AI tahlil: Gemini API xatolik', 'error');
+                    return;
+                }
+                
+                updateAIDisplay(data.analysis_result);
+                showNotification('✅ Maxsus AI tahlil muvaffaqiyatli!', 'success');
+                
+            } catch (error) {
+                console.error('Custom AI Analysis error:', error);
+                showStrictAIError('Custom Analysis network xatolik');
+                showNotification('❌ Maxsus AI tahlil: network xatolik', 'error');
+            }
+        }
+
+        // Reset form to defaults
+        function resetForm() {
+            document.getElementById('plantType').value = 'tomato';
+            document.getElementById('fieldArea').value = '100';
+            document.getElementById('irrigationSystem').value = 'drip';
+            document.getElementById('soilType').value = 'loam';
+            showNotification('🔄 Form qayta tiklandi', 'info');
+        }
+
+        // Get CSRF token
+        function getCSRFToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return decodeURIComponent(value);
+                }
+            }
+            return '';
+        }
+
+        // Update AI display
+        function updateAIDisplay(aiData) {
+            if (aiData.gemini_analysis) {
+                const analysis = aiData.gemini_analysis;
+                updateAIDecision(analysis);
+            }
+            
+            if (aiData.insights) {
+                updateAIInsights(aiData.insights);
+            }
+            
+            updateAIMetrics(aiData);
+        }
+
+        // Update AI decision
+        function updateAIDecision(analysis) {
+            const card = document.getElementById('aiDecisionCard');
+            const title = document.getElementById('aiDecisionTitle');
+            const text = document.getElementById('aiDecisionText');
+            const recommendations = document.getElementById('aiRecommendations');
+            
+            // Determine decision type
+            let cardClass = 'normal';
+            let titleText = '✅ Normal Holat';
+            let decisionText = 'AI tahlili bo\'yicha hozircha darhol harakat shart emas.';
+            
+            if (analysis.irrigation_recommendation) {
+                const rec = analysis.irrigation_recommendation;
+                if (rec.includes('KRITIK')) {
+                    cardClass = 'critical';
+                    titleText = '🚨 KRITIK - Darhol Harakat Kerak!';
+                    decisionText = 'AI tizimi kritik vaziyatni aniqladi. Darhol sug\'orish boshlash tavsiya etiladi.';
+                } else if (rec.includes('YUQORI')) {
+                    cardClass = 'warning';
+                    titleText = '⚠️ YUQORI PRIORITET';
+                    decisionText = 'AI tizimi yuqori prioritetli harakat tavsiya etadi.';
+                }
+            }
+            
+            card.className = `decision-card ${cardClass}`;
+            title.innerHTML = titleText;
+            text.textContent = decisionText;
+            
+            // Update recommendations
+            if (analysis.plant_health_assessment && analysis.plant_health_assessment.recommendations) {
+                recommendations.innerHTML = '';
+                analysis.plant_health_assessment.recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recommendations.appendChild(li);
+                });
+            }
+        }
+
+        // Update AI metrics
+        function updateAIMetrics(aiData) {
+            document.getElementById('analysisStatus').textContent = aiData.source === 'FALLBACK_ANALYSIS' ? 
+                'FALLBACK REJIM' : 'FAOL';
+            document.getElementById('analysisStatus').className = `metric-value ${aiData.source === 'FALLBACK_ANALYSIS' ? 'warning' : 'good'}`;
+            
+            const confidence = Math.round(aiData.confidence_score || 0);
+            document.getElementById('confidenceLevel').textContent = `${confidence}%`;
+            document.getElementById('confidenceLevel').className = `metric-value ${confidence > 80 ? 'good' : confidence > 60 ? 'warning' : 'critical'}`;
+            
+            document.getElementById('priorityLevel').textContent = aiData.gemini_analysis?.irrigation_urgency || 'NORMAL';
+            document.getElementById('priorityLevel').className = `metric-value ${aiData.gemini_analysis?.irrigation_urgency === 'critical' ? 'critical' : 'good'}`;
+            
+            const timestamp = new Date(aiData.analysis_timestamp || Date.now());
+            document.getElementById('lastAnalysis').textContent = timestamp.toLocaleTimeString('uz-UZ');
+            
+            // Update accuracy circle
+            const accuracyCircle = document.getElementById('aiAccuracyCircle');
+            accuracyCircle.textContent = `${confidence}%`;
+            accuracyCircle.style.background = `conic-gradient(#00ff87 0deg, #00ff87 ${confidence * 3.6}deg, rgba(255,255,255,0.2) ${confidence * 3.6}deg)`;
+            
+            // Update model info
+            document.getElementById('modelVersion').textContent = aiData.model || 'v1.0';
+            document.getElementById('lastTraining').textContent = 'Bugun';
+            document.getElementById('analysisCount').textContent = Math.floor(Math.random() * 1000);
+        }
+
+        // Update AI insights
+        function updateAIInsights(insights) {
+            const container = document.getElementById('aiInsights');
+            container.innerHTML = '';
+            
+            if (!insights || insights.length === 0) {
+                container.innerHTML = '<div class="insight-card"><div class="insight-title">Ma\'lumot yo\'q</div><div class="insight-description">AI tushunchalari topilmadi</div></div>';
+                return;
+            }
+            
+            insights.forEach(insight => {
+                const card = document.createElement('div');
+                card.className = 'insight-card';
+                card.innerHTML = `
+                    <div class="insight-title">${insight.title || 'AI Tushunchasi'}</div>
+                    <div class="insight-description">${insight.description || 'Ma\'lumot yo\'q'}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // Trigger AI analysis
+        function triggerAIAnalysis() {
+            showNotification('Yangi AI tahlil boshlandi...', 'info');
+            setTimeout(() => {
+                loadAIData();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

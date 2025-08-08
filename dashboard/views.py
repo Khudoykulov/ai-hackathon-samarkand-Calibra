@@ -14,7 +14,23 @@ from ai_engine.models import AIPrediction, AIInsight
 
 def dashboard_home(request):
     """Serve the main dashboard HTML page"""
-    return render(request, 'dashboard/index.html')
+    return render(request, 'index.html')
+
+def weather_page(request):
+    """Serve the weather page"""
+    return render(request, 'weather.html')
+
+def sensors_page(request):
+    """Serve the sensors page"""
+    return render(request, 'sensors.html')
+
+def ai_page(request):
+    """Serve the AI analysis page"""
+    return render(request, 'ai.html')
+
+def settings_page(request):
+    """Serve the settings page"""
+    return render(request, 'settings.html')
 
 
 @api_view(['GET'])
@@ -175,7 +191,8 @@ def get_realtime_data(request):
             })
         
         return Response({
-            'sensor_readings': current_readings,
+            'success': True,
+            'sensors': current_readings,
             'data_feed': data_entries,
             'timestamp': current_time.isoformat()
         })

@@ -335,6 +335,117 @@
             0% { transform: translate(0, 0); }
             100% { transform: translate(-200px, -150px); }
         }
+
+        /* Notification Styles - XATOLIK FEEDBACK UCHUN */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3.5s forwards;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: 2px solid #ff416c;
+        }
+
+        .notification.warning {
+            background: linear-gradient(45deg, #ff9a00, #ffcd00);
+            border: 2px solid #ff9a00;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border: 2px solid #00ff87;
+        }
+
+        .notification.info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: 2px solid #667eea;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        /* API Status Indicators */
+        .api-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+
+        .api-status .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .api-status .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff416c;
+        }
+
+        .status-dot.online {
+            background: #00ff87;
+        }
+
+        .status-dot.warning {
+            background: #ff9a00;
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -350,8 +461,7 @@
                 <li><a href="weather.html">🌤️ Ob-havo</a></li>
                 <li><a href="sensors.html">📡 Datchilar</a></li>
                 <li><a href="ai.html">🧠 AI Tahlil</a></li>
-                <li><a href="statistics.html">📊 Statistika</a></li>
-                <li><a href="control.html">⚙️ Boshqaruv</a></li>
+                <li><a href="settings.html">⚙️ Sozlamalar</a></li>
             </ul>
         </div>
     </nav>
@@ -419,10 +529,10 @@
                 <div class="progress-container">
                     <div class="progress-label">
                         <span>Tuproq namligi</span>
-                        <span>23%</span>
+                        <span id="soilMoistureValue">-</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill critical" style="width: 23%"></div>
+                        <div id="soilMoistureFill" class="progress-fill critical" style="width: 0%"></div>
                     </div>
                     <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">
                         Kritik: < 25% | Optimal: 60-70%
@@ -432,26 +542,26 @@
                 <div class="progress-container">
                     <div class="progress-label">
                         <span>pH darajasi</span>
-                        <span>6.8</span>
+                        <span id="phValue">-</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 68%"></div>
+                        <div id="phFill" class="progress-fill" style="width: 0%"></div>
                     </div>
                     <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">
-                        Ideal: 6.5-7.2 | Hozirgi: Optimal
+                        Ideal: 6.5-7.2 | Hozirgi: <span id="phStatus">-</span>
                     </div>
                 </div>
 
                 <div class="progress-container">
                     <div class="progress-label">
                         <span>Tuproq harorati</span>
-                        <span>18°C</span>
+                        <span id="soilTempValue">-</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill warning" style="width: 45%"></div>
+                        <div id="soilTempFill" class="progress-fill" style="width: 0%"></div>
                     </div>
                     <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">
-                        Normal: 15-25°C | Hozirgi: Past
+                        Normal: 15-25°C | Hozirgi: <span id="soilTempStatus">-</span>
                     </div>
                 </div>
 
@@ -476,26 +586,26 @@
                 <div class="grid-3">
                     <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                         <div style="font-size: 2rem;">🌡️</div>
-                        <div style="font-size: 1.5rem; color: #60efff; margin: 10px 0;">24°C</div>
+                        <div id="currentTemp" style="font-size: 1.5rem; color: #60efff; margin: 10px 0;">-</div>
                         <div style="opacity: 0.8;">Harorat</div>
                         <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 5px;">
-                            Min: 18°C | Max: 28°C
+                            <span id="tempRange">-</span>
                         </div>
                     </div>
                     <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                         <div style="font-size: 2rem;">💨</div>
-                        <div style="font-size: 1.5rem; color: #ff9a00; margin: 10px 0;">45%</div>
+                        <div id="currentHumidity" style="font-size: 1.5rem; color: #ff9a00; margin: 10px 0;">-</div>
                         <div style="opacity: 0.8;">Namlik</div>
                         <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 5px;">
-                            Quruq havo
+                            <span id="humidityStatus">-</span>
                         </div>
                     </div>
                     <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                         <div style="font-size: 2rem;">🌧️</div>
-                        <div style="font-size: 1.5rem; color: #ff416c; margin: 10px 0;">0mm</div>
+                        <div id="currentRainfall" style="font-size: 1.5rem; color: #ff416c; margin: 10px 0;">-</div>
                         <div style="opacity: 0.8;">Yomg'ir</div>
                         <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 5px;">
-                            Oxirgi: 3 kun oldin
+                            <span id="rainfallStatus">-</span>
                         </div>
                     </div>
                 </div>
@@ -511,10 +621,10 @@
         <div class="panel" style="background: linear-gradient(135deg, rgba(0, 255, 135, 0.1), rgba(96, 239, 255, 0.1)); border: 2px solid rgba(0, 255, 135, 0.3);">
             <h2>🧠 AI Real-time Qarori</h2>
 
-            <div style="background: rgba(255, 65, 108, 0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff416c; animation: emergencyPulse 2s infinite;">
-                <h3 style="color: #ff416c; margin-bottom: 10px;">⚡ TEZKOR HARAKAT KERAK</h3>
-                <p style="font-size: 1.1rem; margin-bottom: 15px;">
-                    Tuproq namligi kritik darajada (23%). AI tahlili asosida darhol sug'orish boshlash tavsiya etiladi!
+            <div id="aiDecisionPanel" style="background: rgba(255, 65, 108, 0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff416c; animation: emergencyPulse 2s infinite;">
+                <h3 id="aiDecisionTitle" style="color: #ff416c; margin-bottom: 10px;">⚡ TEZKOR HARAKAT KERAK</h3>
+                <p id="aiDecisionText" style="font-size: 1.1rem; margin-bottom: 15px;">
+                    AI tahlil natijasi yuklanmoqda...
                 </p>
 
                 <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; margin-bottom: 15px;">
@@ -582,5 +692,318 @@
             </div>
         </div>
     </div>
+
+    <!-- API Status Monitor -->
+    <div class="api-status" id="apiStatus">
+        <div class="status-item">
+            <div class="status-dot" id="weatherApiStatus"></div>
+            <span>Ob-havo API</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot" id="sensorApiStatus"></div>
+            <span>Sensor API</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot" id="aiApiStatus"></div>
+            <span>AI API</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/dashboard-api.js"></script>
+    <script>
+        // DYNAMIC DATA LOADING - API BILAN ISHLASH
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Dashboard initialized');
+            
+            // API status indicator elementlarini olish
+            const weatherStatus = document.getElementById('weatherApiStatus');
+            const sensorStatus = document.getElementById('sensorApiStatus');
+            const aiStatus = document.getElementById('aiApiStatus');
+
+            // API status tracker object
+            window.apiStatusTracker = {
+                weather: false,
+                sensor: false,
+                ai: false,
+                
+                updateStatus: function(apiName, isOnline) {
+                    this[apiName] = isOnline;
+                    const element = document.getElementById(apiName + 'ApiStatus');
+                    if (element) {
+                        element.className = 'status-dot ' + (isOnline ? 'online' : 'warning');
+                    }
+                }
+            };
+
+            // Dashboard API'ni initialize qilish
+            if (window.dashboardAPI) {
+                console.log('✅ Dashboard API loaded successfully');
+            } else {
+                console.error('❌ Dashboard API failed to load');
+                showNotification('Dashboard API yuklanmadi - sahifani yangilang', 'error');
+            }
+
+            // Test notification
+            setTimeout(() => {
+                showNotification('Dashboard yuklandi - API\'lar tekshirilmoqda...', 'info');
+            }, 1000);
+        });
+
+        // Notification function - XATOLIK FEEDBACK UCHUN
+        function showNotification(message, type = 'info') {
+            // Eski notification'larni o'chirish
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+
+            // Yangi notification yaratish
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Type bo'yicha icon qo'shish
+            let icon = '';
+            switch(type) {
+                case 'error': icon = '❌ '; break;
+                case 'warning': icon = '⚠️ '; break;
+                case 'success': icon = '✅ '; break;
+                case 'info': icon = 'ℹ️ '; break;
+            }
+            
+            notification.innerHTML = `${icon}${message}`;
+
+            // Click to dismiss
+            notification.addEventListener('click', () => notification.remove());
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
+
+            // Console'da ham log qilish
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+            showNotification('JavaScript xatoligi: ' + e.message, 'error');
+        });
+
+        // API test function - MANUAL TEST UCHUN
+        async function testAPIs() {
+            showNotification('API\'lar sinov qilinmoqda...', 'info');
+
+            // Weather API test
+            try {
+                const response = await fetch('/api/sensor/weather/');
+                const data = await response.json();
+                
+                if (data.error) {
+                    window.apiStatusTracker.updateStatus('weather', false);
+                    showNotification('Ob-havo API xatolik: ' + data.message, 'error');
+                } else {
+                    window.apiStatusTracker.updateStatus('weather', true);
+                    showNotification('Ob-havo API ishlayapti ✓', 'success');
+                }
+            } catch (error) {
+                window.apiStatusTracker.updateStatus('weather', false);
+                showNotification('Ob-havo API ulanish xatoligi', 'error');
+            }
+
+            // Sensor API test
+            try {
+                const response = await fetch('/api/realtime/');
+                const data = await response.json();
+                
+                if (data.error || !data.success) {
+                    window.apiStatusTracker.updateStatus('sensor', false);
+                    showNotification('Sensor API xatolik yuz berdi', 'error');
+                } else {
+                    window.apiStatusTracker.updateStatus('sensor', true);
+                    showNotification('Sensor API ishlayapti ✓', 'success');
+                }
+            } catch (error) {
+                window.apiStatusTracker.updateStatus('sensor', false);
+                showNotification('Sensor API ulanish xatoligi', 'error');
+            }
+
+            // AI API test
+            try {
+                const response = await fetch('/api/ai/comprehensive-analysis/', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.error || data.analysis_result?.error) {
+                    window.apiStatusTracker.updateStatus('ai', false);
+                    showNotification('AI API ishlamayapti - fallback mode', 'warning');
+                } else {
+                    window.apiStatusTracker.updateStatus('ai', true);
+                    showNotification('AI API ishlayapti ✓', 'success');
+                }
+            } catch (error) {
+                window.apiStatusTracker.updateStatus('ai', false);
+                showNotification('AI API ulanish xatoligi', 'error');
+            }
+        }
+
+        // Auto test APIs every 30 seconds
+        setInterval(testAPIs, 30000);
+        
+        // Initial test after 2 seconds
+        setTimeout(testAPIs, 2000);
+
+        // REAL-TIME DATA UPDATE FUNCTIONS
+        async function updateDashboardData() {
+            try {
+                // 1. SENSOR DATA UPDATE
+                const sensorResponse = await fetch('/api/realtime/');
+                const sensorData = await sensorResponse.json();
+                
+                if (sensorData.success && sensorData.sensors) {
+                    updateSensorDisplay(sensorData.sensors);
+                } else {
+                    showEmptySensorData();
+                }
+
+                // 2. WEATHER DATA UPDATE
+                const weatherResponse = await fetch('/api/sensor/weather/');
+                const weatherData = await weatherResponse.json();
+                
+                if (!weatherData.error) {
+                    updateWeatherDisplay(weatherData);
+                } else {
+                    showEmptyWeatherData();
+                }
+
+                // 3. AI ANALYSIS UPDATE
+                const aiResponse = await fetch('/api/ai/comprehensive-analysis/', {
+                    method: 'POST'
+                });
+                const aiData = await aiResponse.json();
+                
+                if (aiData.analysis_result && !aiData.analysis_result.error) {
+                    updateAIDisplay(aiData.analysis_result);
+                } else {
+                    showEmptyAIData();
+                }
+
+            } catch (error) {
+                console.error('Dashboard data update error:', error);
+                showNotification('Dashboard ma\'lumotlarini yangilashda xatolik', 'error');
+            }
+        }
+
+        // SENSOR DATA DISPLAY
+        function updateSensorDisplay(sensors) {
+            const soilMoistureSensor = sensors.find(s => s.sensor_type && s.sensor_type.toLowerCase().includes('moisture'));
+            const phSensor = sensors.find(s => s.sensor_type && s.sensor_type.toLowerCase().includes('ph'));
+            const soilTempSensor = sensors.find(s => s.sensor_type && s.sensor_type.toLowerCase().includes('soil') && s.sensor_type.toLowerCase().includes('temperature'));
+
+            // Tuproq namligi
+            if (soilMoistureSensor) {
+                document.getElementById('soilMoistureValue').textContent = `${soilMoistureSensor.value}%`;
+                document.getElementById('soilMoistureFill').style.width = `${soilMoistureSensor.value}%`;
+                document.getElementById('soilMoistureFill').className = `progress-fill ${soilMoistureSensor.value < 25 ? 'critical' : soilMoistureSensor.value < 40 ? 'warning' : ''}`;
+            }
+
+            // pH
+            if (phSensor) {
+                document.getElementById('phValue').textContent = phSensor.value.toFixed(1);
+                document.getElementById('phFill').style.width = `${(phSensor.value / 14) * 100}%`;
+                document.getElementById('phStatus').textContent = (phSensor.value >= 6.5 && phSensor.value <= 7.2) ? 'Optimal' : 'Sozlash kerak';
+            }
+
+            // Tuproq harorati
+            if (soilTempSensor) {
+                document.getElementById('soilTempValue').textContent = `${soilTempSensor.value}°C`;
+                document.getElementById('soilTempFill').style.width = `${(soilTempSensor.value / 40) * 100}%`;
+                document.getElementById('soilTempStatus').textContent = (soilTempSensor.value >= 15 && soilTempSensor.value <= 25) ? 'Normal' : 'Optimal emas';
+            }
+        }
+
+        // WEATHER DATA DISPLAY
+        function updateWeatherDisplay(weather) {
+            if (weather.temperature !== '-') {
+                document.getElementById('currentTemp').textContent = `${Math.round(weather.temperature)}°C`;
+                document.getElementById('tempRange').textContent = `Feels like: ${Math.round(weather.feels_like_temperature)}°C`;
+            }
+
+            if (weather.humidity !== '-') {
+                document.getElementById('currentHumidity').textContent = `${Math.round(weather.humidity)}%`;
+                document.getElementById('humidityStatus').textContent = weather.humidity < 50 ? 'Quruq havo' : 'Normal';
+            }
+
+            if (weather.rainfall !== '-') {
+                document.getElementById('currentRainfall').textContent = `${weather.rainfall}mm`;
+                document.getElementById('rainfallStatus').textContent = weather.rainfall > 0 ? 'Yomg\'ir bor' : 'Yomg\'ir yo\'q';
+            }
+        }
+
+        // AI DATA DISPLAY
+        function updateAIDisplay(aiData) {
+            const panel = document.getElementById('aiDecisionPanel');
+            const title = document.getElementById('aiDecisionTitle');
+            const text = document.getElementById('aiDecisionText');
+
+            if (aiData.gemini_analysis && aiData.gemini_analysis.irrigation_recommendation) {
+                const recommendation = aiData.gemini_analysis.irrigation_recommendation;
+                
+                if (recommendation.includes('KRITIK')) {
+                    title.innerHTML = '🚨 KRITIK - Darhol harakat kerak!';
+                    title.style.color = '#ff416c';
+                    panel.style.background = 'rgba(255, 65, 108, 0.2)';
+                    text.textContent = 'Tuproq namligi kritik darajada! AI tahlili asosida darhol sug\'orish boshlash kerak.';
+                } else if (recommendation.includes('YUQORI')) {
+                    title.innerHTML = '⚠️ YUQORI PRIORITET';
+                    title.style.color = '#ff9a00';
+                    panel.style.background = 'rgba(255, 154, 0, 0.2)';
+                    text.textContent = 'Tez orada sug\'orish tavsiya etiladi - AI tahlili asosida.';
+                } else {
+                    title.innerHTML = '✅ NORMAL HOLAT';
+                    title.style.color = '#00ff87';
+                    panel.style.background = 'rgba(0, 255, 135, 0.2)';
+                    text.textContent = 'AI tahlili: Hozircha darhol harakat kerak emas.';
+                }
+            }
+        }
+
+        // EMPTY DATA FUNCTIONS - API ishlamagan holat
+        function showEmptySensorData() {
+            document.getElementById('soilMoistureValue').textContent = '-';
+            document.getElementById('phValue').textContent = '-';
+            document.getElementById('soilTempValue').textContent = '-';
+            document.getElementById('soilMoistureFill').style.width = '0%';
+            document.getElementById('phFill').style.width = '0%';
+            document.getElementById('soilTempFill').style.width = '0%';
+            document.getElementById('phStatus').textContent = '-';
+            document.getElementById('soilTempStatus').textContent = '-';
+        }
+
+        function showEmptyWeatherData() {
+            document.getElementById('currentTemp').textContent = '-';
+            document.getElementById('currentHumidity').textContent = '-';
+            document.getElementById('currentRainfall').textContent = '-';
+            document.getElementById('tempRange').textContent = '-';
+            document.getElementById('humidityStatus').textContent = '-';
+            document.getElementById('rainfallStatus').textContent = '-';
+        }
+
+        function showEmptyAIData() {
+            document.getElementById('aiDecisionTitle').innerHTML = '❌ AI XATOLIK';
+            document.getElementById('aiDecisionTitle').style.color = '#ff416c';
+            document.getElementById('aiDecisionText').textContent = 'AI tahlil ma\'lumotlarini yuklab bo\'lmadi. API ishlamayapti.';
+            document.getElementById('aiDecisionPanel').style.background = 'rgba(128, 128, 128, 0.2)';
+        }
+
+        // AUTO UPDATE every 15 seconds
+        setInterval(updateDashboardData, 15000);
+        
+        // Initial data load after 3 seconds
+        setTimeout(updateDashboardData, 3000);
+    </script>
 </body>
 </html>

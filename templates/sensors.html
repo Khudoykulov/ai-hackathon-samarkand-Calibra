@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Sug'orish - Datchilar Monitoring</title>
+    <title>AI Sug'orish - Sensor Ma'lumotlari</title>
     <style>
         * {
             margin: 0;
@@ -97,386 +97,182 @@
             color: #00ff87;
         }
 
-        /* System Overview */
-        .system-overview {
+        .sensors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .overview-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .overview-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .overview-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #00ff87;
-            margin-bottom: 5px;
-        }
-
-        .overview-label {
-            font-size: 1rem;
-            opacity: 0.8;
-        }
-
-        /* Sensor Grid */
-        .sensor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
 
         .sensor-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
             padding: 20px;
-            border-left: 4px solid #00ff87;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
-            overflow: hidden;
         }
 
         .sensor-card:hover {
-            transform: translateX(5px);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .sensor-card.warning {
-            border-left-color: #ff9a00;
-            background: rgba(255, 154, 0, 0.05);
+            transform: translateY(-5px);
         }
 
         .sensor-card.critical {
-            border-left-color: #ff416c;
-            background: rgba(255, 65, 108, 0.05);
-            animation: alertPulse 3s infinite;
+            border-left: 4px solid #ff416c;
+            background: rgba(255, 65, 108, 0.15);
         }
 
-        @keyframes alertPulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(255, 65, 108, 0.3); }
-            50% { box-shadow: 0 0 25px rgba(255, 65, 108, 0.6); }
+        .sensor-card.warning {
+            border-left: 4px solid #ff9a00;
+            background: rgba(255, 154, 0, 0.15);
+        }
+
+        .sensor-card.normal {
+            border-left: 4px solid #00ff87;
+            background: rgba(0, 255, 135, 0.15);
         }
 
         .sensor-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
         }
 
+        .sensor-icon {
+            font-size: 2rem;
+        }
+
         .sensor-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .sensor-id {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-
-        .sensor-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9rem;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #00ff87;
-            animation: statusPulse 2s infinite;
-        }
-
-        .status-dot.warning {
-            background: #ff9a00;
-        }
-
-        .status-dot.critical {
-            background: #ff416c;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            font-size: 1.3rem;
+            font-weight: bold;
         }
 
         .sensor-value {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #00ff87;
-            margin: 15px 0 10px 0;
-            text-shadow: 0 0 20px rgba(0, 255, 135, 0.3);
+            margin: 10px 0;
         }
 
-        .sensor-card.warning .sensor-value {
-            color: #ff9a00;
-            text-shadow: 0 0 20px rgba(255, 154, 0, 0.3);
+        .sensor-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
         }
 
-        .sensor-card.critical .sensor-value {
+        .status-critical {
+            background: rgba(255, 65, 108, 0.3);
             color: #ff416c;
-            text-shadow: 0 0 20px rgba(255, 65, 108, 0.3);
         }
 
-        .sensor-unit {
-            font-size: 1rem;
-            opacity: 0.8;
-            margin-left: 5px;
+        .status-warning {
+            background: rgba(255, 154, 0, 0.3);
+            color: #ff9a00;
+        }
+
+        .status-normal {
+            background: rgba(0, 255, 135, 0.3);
+            color: #00ff87;
         }
 
         .sensor-details {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.9rem;
+            opacity: 0.8;
             line-height: 1.4;
         }
 
-        .sensor-location {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 8px;
-            opacity: 0.8;
-        }
-
-        .sensor-last-update {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            opacity: 0.7;
-        }
-
-        /* Mini Chart */
-        .mini-chart {
-            height: 40px;
-            margin: 10px 0;
-            display: flex;
-            align-items: end;
-            gap: 2px;
-        }
-
-        .chart-bar {
-            background: linear-gradient(to top, rgba(0, 255, 135, 0.3), #00ff87);
-            border-radius: 2px;
-            flex: 1;
-            min-height: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .sensor-card.warning .chart-bar {
-            background: linear-gradient(to top, rgba(255, 154, 0, 0.3), #ff9a00);
-        }
-
-        .sensor-card.critical .chart-bar {
-            background: linear-gradient(to top, rgba(255, 65, 108, 0.3), #ff416c);
-        }
-
-        .chart-bar:hover {
-            transform: scaleY(1.2);
-        }
-
-        /* Data Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .data-table th {
-            background: rgba(0, 255, 135, 0.2);
-            padding: 15px 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #00ff87;
-            border-bottom: 2px solid rgba(0, 255, 135, 0.3);
-        }
-
-        .data-table td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            transition: background 0.3s ease;
-        }
-
-        .data-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Status badges */
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 15px;
+        .sensor-timestamp {
             font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-            display: inline-block;
+            opacity: 0.6;
+            margin-top: 10px;
         }
 
-        .status-badge.normal {
-            background: rgba(0, 255, 135, 0.2);
-            color: #00ff87;
-            border: 1px solid rgba(0, 255, 135, 0.3);
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3.5s forwards;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
 
-        .status-badge.warning {
-            background: rgba(255, 154, 0, 0.2);
-            color: #ff9a00;
-            border: 1px solid rgba(255, 154, 0, 0.3);
+        .notification.error {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: 2px solid #ff416c;
         }
 
-        .status-badge.critical {
-            background: rgba(255, 65, 108, 0.2);
-            color: #ff416c;
-            border: 1px solid rgba(255, 65, 108, 0.3);
+        .notification.warning {
+            background: linear-gradient(45deg, #ff9a00, #ffcd00);
+            border: 2px solid #ff9a00;
         }
 
-        .status-badge.offline {
-            background: rgba(128, 128, 128, 0.2);
-            color: #888;
-            border: 1px solid rgba(128, 128, 128, 0.3);
+        .notification.success {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border: 2px solid #00ff87;
         }
 
-        /* Network Status */
-        .network-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        .notification.info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: 2px solid #667eea;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        .controls-panel {
+            display: flex;
             gap: 15px;
-            margin-top: 20px;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        .network-node {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            position: relative;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .network-node.active {
-            border-color: #00ff87;
-            box-shadow: 0 0 15px rgba(0, 255, 135, 0.3);
-        }
-
-        .network-node.warning {
-            border-color: #ff9a00;
-            box-shadow: 0 0 15px rgba(255, 154, 0, 0.3);
-        }
-
-        .network-node.error {
-            border-color: #ff416c;
-            box-shadow: 0 0 15px rgba(255, 65, 108, 0.3);
-        }
-
-        .node-icon {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-
-        .node-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .node-signal {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        /* Action Button */
-        .action-btn {
+        .refresh-btn {
             background: linear-gradient(45deg, #00ff87, #60efff);
             border: none;
-            color: #000;
-            padding: 8px 15px;
+            color: white;
+            padding: 10px 20px;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
             transition: all 0.3s ease;
         }
 
-        .action-btn:hover {
+        .refresh-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.3);
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sensor-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .system-overview {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .data-table {
-                font-size: 0.9rem;
-            }
-
-            .data-table th,
-            .data-table td {
-                padding: 10px 8px;
-            }
-
-            .nav-links {
-                flex-direction: column;
-                gap: 5px;
-            }
+        .last-update {
+            opacity: 0.8;
+            font-size: 0.9rem;
         }
 
-        /* Background Animation */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.3), transparent);
-            background-repeat: repeat;
-            background-size: 200px 150px;
-            animation: particle-animation 20s linear infinite;
+        .loading {
+            opacity: 0.6;
             pointer-events: none;
-            z-index: -1;
-        }
-
-        @keyframes particle-animation {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-200px, -150px); }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">
@@ -484,604 +280,267 @@
                 AI Sug'orish Tizimi
             </div>
             <ul class="nav-links">
-                <li><a href="dashboard.html">🏠 Dashboard</a></li>
-                <li><a href="weather.html">🌤️ Ob-havo</a></li>
-                <li><a href="sensors.html" class="active">📡 Datchilar</a></li>
-                <li><a href="ai.html">🧠 AI Tahlil</a></li>
-                <li><a href="statistics.html">📊 Statistika</a></li>
-                <li><a href="control.html">⚙️ Boshqaruv</a></li>
+                <li><a href="/">🏠 Dashboard</a></li>
+                <li><a href="/weather.html">🌤️ Ob-havo</a></li>
+                <li><a href="/sensors.html" class="active">📡 Datchilar</a></li>
+                <li><a href="/ai.html">🧠 AI Tahlil</a></li>
+                <li><a href="/settings.html">⚙️ Sozlamalar</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Page Header -->
+        <!-- Controls Panel -->
         <div class="panel">
-            <h2>📡 Datchilar Real-time Monitoring</h2>
-            <p style="opacity: 0.8; margin-top: 10px;">
-                Barcha IoT datchilardan real vaqtda kelayotgan ma'lumotlarni kuzatish va tahlil qilish tizimi
-            </p>
-            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                <div style="padding: 8px 15px; background: rgba(0, 255, 135, 0.1); border-radius: 8px; font-size: 0.9rem;">
-                    <strong style="color: #00ff87;">📊 Oxirgi yangilanish:</strong> <span>2 soniya oldin</span>
+            <div class="controls-panel">
+                <button class="refresh-btn" onclick="loadSensorData()">🔄 Yangilash</button>
+                <div class="last-update">
+                    Oxirgi yangilanish: <span id="lastUpdate">-</span>
                 </div>
-                <a href="#" class="action-btn">🔄 Barcha Datchilarni Yangilash</a>
             </div>
         </div>
 
-        <!-- System Overview -->
-        <div class="system-overview">
-            <div class="overview-card">
-                <div class="overview-icon">📡</div>
-                <div class="overview-value">12</div>
-                <div class="overview-label">Jami Datchilar</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-icon">✅</div>
-                <div class="overview-value">9</div>
-                <div class="overview-label">Faol Datchilar</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-icon">⚠️</div>
-                <div class="overview-value">2</div>
-                <div class="overview-label">Ogohlantirishlar</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-icon">🚨</div>
-                <div class="overview-value">1</div>
-                <div class="overview-label">Kritik Holatlar</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-icon">📶</div>
-                <div class="overview-value">94%</div>
-                <div class="overview-label">Tarmoq Signali</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-icon">🔋</div>
-                <div class="overview-value">87%</div>
-                <div class="overview-label">O'rtacha Batareya</div>
-            </div>
-        </div>
-
-        <!-- Active Sensors Grid -->
+        <!-- Sensors Grid -->
         <div class="panel">
-            <h2>🌐 Faol Datchilar Network</h2>
-        </div>
-
-        <div class="sensor-grid">
-            <div class="sensor-card critical">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🌍 Tuproq Namligi #1</div>
-                        <div class="sensor-id">ID: SM-001-A</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot critical"></div>
-                        <span>Kritik</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">23</span>
-                    <span class="sensor-unit">%</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 40%"></div>
-                    <div class="chart-bar" style="height: 35%"></div>
-                    <div class="chart-bar" style="height: 30%"></div>
-                    <div class="chart-bar" style="height: 25%"></div>
-                    <div class="chart-bar" style="height: 23%"></div>
-                    <div class="chart-bar" style="height: 20%"></div>
-                    <div class="chart-bar" style="height: 18%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: A sektori, 2-qator, chuqurlik 15cm</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 15 soniya oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #ff416c;">⚠️ Ogohantirish:</strong> Darhol sug'orish talab qilinadi!
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card warning">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🌍 Tuproq Namligi #2</div>
-                        <div class="sensor-id">ID: SM-002-B</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot warning"></div>
-                        <span>Past</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">35</span>
-                    <span class="sensor-unit">%</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 50%"></div>
-                    <div class="chart-bar" style="height: 45%"></div>
-                    <div class="chart-bar" style="height: 40%"></div>
-                    <div class="chart-bar" style="height: 38%"></div>
-                    <div class="chart-bar" style="height: 35%"></div>
-                    <div class="chart-bar" style="height: 33%"></div>
-                    <div class="chart-bar" style="height: 35%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: B sektori, 1-qator, chuqurlik 15cm</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 22 soniya oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #ff9a00;">⚠️ Holat:</strong> Kuzatish kerak, tez orada sug'orish
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🌡️ Tuproq Harorati #1</div>
-                        <div class="sensor-id">ID: ST-001-A</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Normal</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">18.5</span>
-                    <span class="sensor-unit">°C</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 60%"></div>
-                    <div class="chart-bar" style="height: 65%"></div>
-                    <div class="chart-bar" style="height: 62%"></div>
-                    <div class="chart-bar" style="height: 58%"></div>
-                    <div class="chart-bar" style="height: 60%"></div>
-                    <div class="chart-bar" style="height: 63%"></div>
-                    <div class="chart-bar" style="height: 61%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: A sektori, chuqurlik 20cm</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 35 soniya oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Biroz quruq, ammo normal oraliqda
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🌡️ Havo Harorati</div>
-                        <div class="sensor-id">ID: AT-001-M</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Optimal</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">24.2</span>
-                    <span class="sensor-unit">°C</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 70%"></div>
-                    <div class="chart-bar" style="height: 72%"></div>
-                    <div class="chart-bar" style="height: 75%"></div>
-                    <div class="chart-bar" style="height: 73%"></div>
-                    <div class="chart-bar" style="height: 71%"></div>
-                    <div class="chart-bar" style="height: 74%"></div>
-                    <div class="chart-bar" style="height: 76%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: Markaziy meteo stantsiya, 2m balandlik</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 1 daqiqa oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Ideal harorat o'simliklar uchun
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🌧️ Yomg'ir Datchigi</div>
-                        <div class="sensor-id">ID: RD-001-M</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Faol</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">0.0</span>
-                    <span class="sensor-unit">mm</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 5%"></div>
-                    <div class="chart-bar" style="height: 8%"></div>
-                    <div class="chart-bar" style="height: 3%"></div>
-                    <div class="chart-bar" style="height: 0%"></div>
-                    <div class="chart-bar" style="height: 0%"></div>
-                    <div class="chart-bar" style="height: 0%"></div>
-                    <div class="chart-bar" style="height: 0%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: Markaziy meteo stantsiya</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 45 soniya oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Oxirgi yomg'ir: 3 kun oldin (12mm)
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">⚡ pH Datchigi</div>
-                        <div class="sensor-id">ID: PH-001-A</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Normal</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">6.8</span>
-                    <span class="sensor-unit">pH</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 68%"></div>
-                    <div class="chart-bar" style="height: 70%"></div>
-                    <div class="chart-bar" style="height: 67%"></div>
-                    <div class="chart-bar" style="height: 69%"></div>
-                    <div class="chart-bar" style="height: 68%"></div>
-                    <div class="chart-bar" style="height: 66%"></div>
-                    <div class="chart-bar" style="height: 68%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: A sektori, chuqurlik 25cm</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 3 daqiqa oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Ideal pH darajasi o'simliklar uchun
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">🔌 O'tkazuvchanlik</div>
-                        <div class="sensor-id">ID: EC-001-A</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Normal</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">1.24</span>
-                    <span class="sensor-unit">mS/cm</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 62%"></div>
-                    <div class="chart-bar" style="height: 64%"></div>
-                    <div class="chart-bar" style="height: 61%"></div>
-                    <div class="chart-bar" style="height: 63%"></div>
-                    <div class="chart-bar" style="height: 62%"></div>
-                    <div class="chart-bar" style="height: 65%"></div>
-                    <div class="chart-bar" style="height: 64%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: A sektori, chuqurlik 25cm</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 3 daqiqa oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Yaxshi o'tkazuvchanlik darajasi
-                    </div>
-                </div>
-            </div>
-
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <div>
-                        <div class="sensor-name">☀️ Yorug'lik Datchigi</div>
-                        <div class="sensor-id">ID: LS-001-M</div>
-                    </div>
-                    <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Yuqori</span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="sensor-value">847</span>
-                    <span class="sensor-unit">W/m²</span>
-                </div>
-
-                <div class="mini-chart">
-                    <div class="chart-bar" style="height: 80%"></div>
-                    <div class="chart-bar" style="height: 85%"></div>
-                    <div class="chart-bar" style="height: 82%"></div>
-                    <div class="chart-bar" style="height: 87%"></div>
-                    <div class="chart-bar" style="height: 84%"></div>
-                    <div class="chart-bar" style="height: 86%"></div>
-                    <div class="chart-bar" style="height: 85%"></div>
-                </div>
-
-                <div class="sensor-details">
-                    <div class="sensor-location">📍 Joylashuv: Markaziy meteo stantsiya</div>
-                    <div class="sensor-last-update">🕐 Oxirgi yangilanish: 50 soniya oldin</div>
-                    <div style="margin-top: 8px; font-size: 0.85rem;">
-                        <strong style="color: #00ff87;">✅ Holat:</strong> Quyoshli kun, fotosintez uchun ideal
-                    </div>
-                </div>
+            <h2>📡 Real-time Sensor Ma'lumotlari</h2>
+            <div id="sensorsGrid" class="sensors-grid">
+                <!-- Sensor cards will be loaded here -->
             </div>
         </div>
 
-        <!-- Network Status -->
+        <!-- Sensor Statistics -->
         <div class="panel">
-            <h2>📶 Sensor Network Topology</h2>
-            <p style="opacity: 0.8; margin-bottom: 20px;">Datchilar tarmog'ining real vaqt holati va signal quvvati</p>
-
-            <div class="network-grid">
-                <div class="network-node active">
-                    <div class="node-icon">🌐</div>
-                    <div class="node-name">Gateway</div>
-                    <div class="node-signal">100% Signal</div>
-                </div>
-                <div class="network-node active">
-                    <div class="node-icon">🌍</div>
-                    <div class="node-name">Soil-A</div>
-                    <div class="node-signal">94% Signal</div>
-                </div>
-                <div class="network-node warning">
-                    <div class="node-icon">🌍</div>
-                    <div class="node-name">Soil-B</div>
-                    <div class="node-signal">67% Signal</div>
-                </div>
-                <div class="network-node active">
-                    <div class="node-icon">🌡️</div>
-                    <div class="node-name">Temp-1</div>
-                    <div class="node-signal">89% Signal</div>
-                </div>
-                <div class="network-node active">
-                    <div class="node-icon">💨</div>
-                    <div class="node-name">Weather</div>
-                    <div class="node-signal">92% Signal</div>
-                </div>
-                <div class="network-node active">
-                    <div class="node-icon">⚡</div>
-                    <div class="node-name">pH-Sensor</div>
-                    <div class="node-signal">78% Signal</div>
-                </div>
-                <div class="network-node active">
-                    <div class="node-icon">☀️</div>
-                    <div class="node-name">Light-1</div>
-                    <div class="node-signal">85% Signal</div>
-                </div>
-                <div class="network-node error">
-                    <div class="node-icon">💧</div>
-                    <div class="node-name">Water-Level</div>
-                    <div class="node-signal">0% Offline</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Detailed Statistics Table -->
-        <div class="panel">
-            <h2>📊 Batafsil Datchilar Statistikasi</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Datchik Nomi</th>
-                        <th>Hozirgi Qiymat</th>
-                        <th>Min (24s)</th>
-                        <th>Max (24s)</th>
-                        <th>O'rtacha</th>
-                        <th>Signal</th>
-                        <th>Batareya</th>
-                        <th>Holati</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr style="background: rgba(255, 65, 108, 0.05);">
-                        <td>🌍 Tuproq Namligi #1</td>
-                        <td style="color: #ff416c; font-weight: bold;">23%</td>
-                        <td>19%</td>
-                        <td>45%</td>
-                        <td>31%</td>
-                        <td>94%</td>
-                        <td>87%</td>
-                        <td><span class="status-badge critical">Kritik</span></td>
-                    </tr>
-                    <tr style="background: rgba(255, 154, 0, 0.05);">
-                        <td>🌍 Tuproq Namligi #2</td>
-                        <td style="color: #ff9a00; font-weight: bold;">35%</td>
-                        <td>28%</td>
-                        <td>52%</td>
-                        <td>38%</td>
-                        <td>67%</td>
-                        <td>91%</td>
-                        <td><span class="status-badge warning">Past</span></td>
-                    </tr>
-                    <tr>
-                        <td>🌡️ Tuproq Harorati #1</td>
-                        <td style="color: #00ff87; font-weight: bold;">18.5°C</td>
-                        <td>15.2°C</td>
-                        <td>22.1°C</td>
-                        <td>18.7°C</td>
-                        <td>89%</td>
-                        <td>95%</td>
-                        <td><span class="status-badge normal">Normal</span></td>
-                    </tr>
-                    <tr>
-                        <td>💨 Havo Namligi</td>
-                        <td style="color: #00ff87; font-weight: bold;">45%</td>
-                        <td>42%</td>
-                        <td>68%</td>
-                        <td>55%</td>
-                        <td>92%</td>
-                        <td>88%</td>
-                        <td><span class="status-badge normal">Normal</span></td>
-                    </tr>
-                    <tr>
-                        <td>🌡️ Havo Harorati</td>
-                        <td style="color: #00ff87; font-weight: bold;">24.2°C</td>
-                        <td>18.5°C</td>
-                        <td>28.3°C</td>
-                        <td>23.1°C</td>
-                        <td>92%</td>
-                        <td>88%</td>
-                        <td><span class="status-badge normal">Optimal</span></td>
-                    </tr>
-                    <tr>
-                        <td>🌧️ Yomg'ir Datchigi</td>
-                        <td style="color: #00ff87; font-weight: bold;">0.0mm</td>
-                        <td>0.0mm</td>
-                        <td>12.5mm</td>
-                        <td>0.8mm</td>
-                        <td>89%</td>
-                        <td>93%</td>
-                        <td><span class="status-badge normal">Faol</span></td>
-                    </tr>
-                    <tr>
-                        <td>⚡ pH Datchigi</td>
-                        <td style="color: #00ff87; font-weight: bold;">6.8</td>
-                        <td>6.5</td>
-                        <td>7.2</td>
-                        <td>6.9</td>
-                        <td>78%</td>
-                        <td>82%</td>
-                        <td><span class="status-badge normal">Normal</span></td>
-                    </tr>
-                    <tr>
-                        <td>🔌 O'tkazuvchanlik</td>
-                        <td style="color: #00ff87; font-weight: bold;">1.24 mS/cm</td>
-                        <td>1.15</td>
-                        <td>1.35</td>
-                        <td>1.26</td>
-                        <td>78%</td>
-                        <td>82%</td>
-                        <td><span class="status-badge normal">Normal</span></td>
-                    </tr>
-                    <tr>
-                        <td>☀️ Yorug'lik Datchigi</td>
-                        <td style="color: #00ff87; font-weight: bold;">847 W/m²</td>
-                        <td>0</td>
-                        <td>950</td>
-                        <td>420</td>
-                        <td>85%</td>
-                        <td>90%</td>
-                        <td><span class="status-badge normal">Yuqori</span></td>
-                    </tr>
-                    <tr style="background: rgba(128, 128, 128, 0.05);">
-                        <td>💧 Suv Darajasi</td>
-                        <td style="color: #888; font-weight: bold;">--</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>0%</td>
-                        <td>--</td>
-                        <td><span class="status-badge offline">Offline</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Sensor Maintenance Schedule -->
-        <div class="panel">
-            <h2>🔧 Datchilar Texnik Xizmat Jadvali</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
-                <div style="background: rgba(255, 154, 0, 0.1); border-radius: 10px; padding: 20px; border-left: 4px solid #ff9a00;">
-                    <h3 style="color: #ff9a00; margin-bottom: 15px;">⚠️ Tez orada Texnik Xizmat</h3>
-                    <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li><strong>Tuproq Namligi #2</strong> - Kalibrlash kerak (5 kun qoldi)</li>
-                        <li><strong>pH Datchigi</strong> - Tozalash kerak (3 kun qoldi)</li>
-                        <li><strong>Yorug'lik Sensori</strong> - Batareya almashtirish (7 kun qoldi)</li>
-                    </ul>
-                </div>
-
-                <div style="background: rgba(0, 255, 135, 0.1); border-radius: 10px; padding: 20px; border-left: 4px solid #00ff87;">
-                    <h3 style="color: #00ff87; margin-bottom: 15px;">✅ Yaqinda Xizmat Ko'rsatilgan</h3>
-                    <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li><strong>Havo Harorati</strong> - Kalibrlangan (2 kun oldin)</li>
-                        <li><strong>Shamol Datchigi</strong> - Tozalangan (5 kun oldin)</li>
-                        <li><strong>Yomg'ir Sensori</strong> - Tekshirilgan (1 hafta oldin)</li>
-                    </ul>
-                </div>
-
-                <div style="background: rgba(255, 65, 108, 0.1); border-radius: 10px; padding: 20px; border-left: 4px solid #ff416c;">
-                    <h3 style="color: #ff416c; margin-bottom: 15px;">🚨 Tezkor Harakat Kerak</h3>
-                    <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li><strong>Suv Darajasi Datchigi</strong> - Offline, ta'mirlash kerak</li>
-                        <li><strong>Tuproq Namligi #1</strong> - Signali past, pozitsiya tekshirish</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Data Export and Settings -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-            <div class="panel">
-                <h2>📤 Ma'lumotlar Eksporti</h2>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <a href="#" class="action-btn" style="text-align: center; padding: 12px 20px;">📊 CSV Export</a>
-                    <a href="#" class="action-btn" style="text-align: center; padding: 12px 20px; background: linear-gradient(45deg, #667eea, #764ba2); color: #fff;">📈 Excel Export</a>
-                    <a href="#" class="action-btn" style="text-align: center; padding: 12px 20px; background: linear-gradient(45deg, #ff9a00, #ffcd00); color: #000;">💾 JSON Export</a>
-                    <a href="#" class="action-btn" style="text-align: center; padding: 12px 20px; background: linear-gradient(45deg, #ff416c, #ff4b2b); color: #fff;">📋 PDF Hisobot</a>
-                </div>
-
-                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
-                    <h4 style="margin-bottom: 10px; color: #60efff;">⏰ Avtomatik Eksport:</h4>
-                    <div style="font-size: 0.9rem; line-height: 1.6;">
-                        • Kundalik CSV hisobot: ✅ Faol<br>
-                        • Haftalik Excel hisobot: ✅ Faol<br>
-                        • Oylik PDF hisobot: ✅ Faol
+            <h2>📊 Sensor Statistikasi</h2>
+            <div class="sensors-grid">
+                <div class="sensor-card normal">
+                    <div class="sensor-header">
+                        <div class="sensor-icon">✅</div>
+                        <div class="sensor-name">Faol Datchiklar</div>
                     </div>
+                    <div id="activeSensors" class="sensor-value">-</div>
+                    <div class="sensor-details">Hozirda ishlayotgan datchiklar soni</div>
                 </div>
-            </div>
 
-            <div class="panel">
-                <h2>⚙️ Datchilar Sozlamalari</h2>
-                <div style="display: grid; gap: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
-                        <span>Ma'lumot olish davriyligi:</span>
-                        <span style="background: rgba(0, 255, 135, 0.2); padding: 5px 10px; border-radius: 5px; color: #00ff87;">5 daqiqa</span>
+                <div class="sensor-card warning">
+                    <div class="sensor-header">
+                        <div class="sensor-icon">⚠️</div>
+                        <div class="sensor-name">Ogohlantirish</div>
                     </div>
+                    <div id="warningSensors" class="sensor-value">-</div>
+                    <div class="sensor-details">Diqqat talab qiladigan datchiklar</div>
+                </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
-                        <span>Ogohlantirishlar:</span>
-                        <span style="background: rgba(0, 255, 135, 0.2); padding: 5px 15px; border-radius: 5px; color: #00ff87;">✅ Faol</span>
+                <div class="sensor-card critical">
+                    <div class="sensor-header">
+                        <div class="sensor-icon">🚨</div>
+                        <div class="sensor-name">Kritik</div>
                     </div>
+                    <div id="criticalSensors" class="sensor-value">-</div>
+                    <div class="sensor-details">Darhol harakat talab qiladigan</div>
+                </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
-                        <span>Avtosoxlash:</span>
-                        <span style="background: rgba(0, 255, 135, 0.2); padding: 5px 15px; border-radius: 5px; color: #00ff87;">✅ Faol</span>
+                <div class="sensor-card normal">
+                    <div class="sensor-header">
+                        <div class="sensor-icon">📊</div>
+                        <div class="sensor-name">Jami</div>
                     </div>
-
-                    <a href="#" class="action-btn" style="background: linear-gradient(45deg, #ff9a00, #ffcd00); color: #000; padding: 12px 20px; text-align: center; margin-top: 10px; text-decoration: none;">🔧 Barcha Datchilarni Kalibrlash</a>
+                    <div id="totalSensors" class="sensor-value">-</div>
+                    <div class="sensor-details">Tizimdagi barcha datchiklar</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Sensors page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📡 Sensors page initialized');
+            loadSensorData();
+            
+            // Auto refresh every 10 seconds
+            setInterval(loadSensorData, 10000);
+        });
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = '';
+            switch(type) {
+                case 'error': icon = '❌ '; break;
+                case 'warning': icon = '⚠️ '; break;
+                case 'success': icon = '✅ '; break;
+                case 'info': icon = 'ℹ️ '; break;
+            }
+            
+            notification.innerHTML = `${icon}${message}`;
+            notification.addEventListener('click', () => notification.remove());
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
+        }
+
+        // Load sensor data
+        async function loadSensorData() {
+            try {
+                document.body.classList.add('loading');
+                showNotification('Sensor ma\'lumotlari yuklanmoqda...', 'info');
+                
+                const response = await fetch('/api/realtime/');
+                const data = await response.json();
+                
+                if (!data.success || data.error) {
+                    showEmptySensorData();
+                    showNotification('Sensor API xatolik: ' + (data.message || 'Ma\'lumot yo\'q'), 'error');
+                    return;
+                }
+                
+                updateSensorsDisplay(data.sensors || []);
+                updateLastUpdateTime();
+                showNotification('Sensor ma\'lumotlari yangilandi ✓', 'success');
+                
+            } catch (error) {
+                console.error('Sensors data error:', error);
+                showEmptySensorData();
+                showNotification('Sensor ma\'lumotlarini yuklashda xatolik', 'error');
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
+
+        // Update sensors display
+        function updateSensorsDisplay(sensors) {
+            const grid = document.getElementById('sensorsGrid');
+            
+            if (!sensors || sensors.length === 0) {
+                grid.innerHTML = '<div class="sensor-card"><div class="sensor-name">Ma\'lumot yo\'q</div><div class="sensor-details">Sensor ma\'lumotlari topilmadi</div></div>';
+                return;
+            }
+            
+            grid.innerHTML = '';
+            
+            let stats = { active: 0, warning: 0, critical: 0, total: sensors.length };
+            
+            sensors.forEach(sensor => {
+                const card = document.createElement('div');
+                
+                // Determine status
+                let status = 'normal';
+                let statusText = 'Normal';
+                let statusClass = 'status-normal';
+                
+                if (sensor.sensor_type && sensor.sensor_type.toLowerCase().includes('moisture')) {
+                    if (sensor.value < 25) {
+                        status = 'critical';
+                        statusText = 'Kritik';
+                        statusClass = 'status-critical';
+                        stats.critical++;
+                    } else if (sensor.value < 40) {
+                        status = 'warning';
+                        statusText = 'Ogohlantirish';
+                        statusClass = 'status-warning';
+                        stats.warning++;
+                    } else {
+                        stats.active++;
+                    }
+                } else {
+                    stats.active++;
+                }
+                
+                card.className = `sensor-card ${status}`;
+                card.innerHTML = `
+                    <div class="sensor-header">
+                        <div class="sensor-icon">${getSensorIcon(sensor.sensor_type || '')}</div>
+                        <div class="sensor-name">${sensor.sensor_name || 'Noma\'lum sensor'}</div>
+                    </div>
+                    <div class="sensor-value">${sensor.value || '-'}${sensor.unit || ''}</div>
+                    <div class="sensor-status ${statusClass}">${statusText}</div>
+                    <div class="sensor-details">
+                        📍 ${sensor.location || 'Noma\'lum joylashuv'}<br>
+                        🆔 ${sensor.sensor_id || 'ID yo\'q'}
+                    </div>
+                    <div class="sensor-timestamp">
+                        🕒 ${formatTime(sensor.timestamp)}
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+            
+            // Update statistics
+            updateSensorStats(stats);
+        }
+
+        // Update sensor statistics
+        function updateSensorStats(stats) {
+            document.getElementById('activeSensors').textContent = stats.active;
+            document.getElementById('warningSensors').textContent = stats.warning;
+            document.getElementById('criticalSensors').textContent = stats.critical;
+            document.getElementById('totalSensors').textContent = stats.total;
+        }
+
+        // Show empty sensor data
+        function showEmptySensorData() {
+            const grid = document.getElementById('sensorsGrid');
+            grid.innerHTML = `
+                <div class="sensor-card">
+                    <div class="sensor-header">
+                        <div class="sensor-icon">❌</div>
+                        <div class="sensor-name">API Xatolik</div>
+                    </div>
+                    <div class="sensor-value">-</div>
+                    <div class="sensor-details">Sensor ma'lumotlari yuklanmadi</div>
+                </div>
+            `;
+            
+            // Reset stats
+            updateSensorStats({ active: 0, warning: 0, critical: 0, total: 0 });
+        }
+
+        // Get sensor icon
+        function getSensorIcon(sensorType) {
+            const type = sensorType.toLowerCase();
+            if (type.includes('moisture') || type.includes('namlik')) return '🌍';
+            if (type.includes('temperature') || type.includes('harorat')) return '🌡️';
+            if (type.includes('humidity') || type.includes('havo')) return '💧';
+            if (type.includes('ph')) return '⚗️';
+            if (type.includes('conductivity') || type.includes('otkazuvchan')) return '⚡';
+            if (type.includes('light') || type.includes('yorug')) return '☀️';
+            return '📡';
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return 'Noma\'lum vaqt';
+            
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('uz-UZ', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch {
+                return 'Noma\'lum vaqt';
+            }
+        }
+
+        // Update last update time
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('uz-UZ', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+    </script>
 </body>
+</html>

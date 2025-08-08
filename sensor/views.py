@@ -198,9 +198,27 @@ def get_weather_data(request):
         current_response = requests.get(current_url, timeout=15)
         
         if current_response.status_code != 200:
+            # API xatoligi bo'lsa chiziqcha qaytarish
             return Response({
+                'location': '-',
+                'temperature': '-',
+                'humidity': '-',
+                'pressure': '-',
+                'wind_speed': '-',
+                'wind_direction': '-',
+                'rainfall': '-',
+                'weather_condition': 'API xatoligi',
+                'icon': '-',
+                'visibility': '-',
+                'uv_index': '-',
+                'air_quality_index': '-',
+                'feels_like_temperature': '-',
+                'cloud_coverage': '-',
+                'dew_point': '-',
+                'wind_gust': '-',
+                'solar_radiation': '-',
                 'error': f'OpenWeather API error: {current_response.status_code}',
-                'details': current_response.json()
+                'message': 'Havo ma\'lumotlarini yuklashda API xatoligi'
             }, status=status.HTTP_400_BAD_REQUEST)
             
         current_data = current_response.json()
@@ -258,18 +276,50 @@ def get_weather_data(request):
         })
             
     except requests.exceptions.RequestException as e:
+        # API ishlamagan holda chiziqcha qaytarish
         return Response({
-            'error': f'NETWORK_ERROR_REAL_API: {str(e)}',
-            'message': 'Real OpenWeather API network error - no fallback data',
-            'required_action': 'Check internet connection and API key validity',
-            'source': 'REAL_API_NETWORK_FAILED'
+            'location': '-',
+            'temperature': '-',
+            'humidity': '-',
+            'pressure': '-',
+            'wind_speed': '-',
+            'wind_direction': '-',
+            'rainfall': '-',
+            'weather_condition': 'Malumotlarni yuklashda xatolik',
+            'icon': '-',
+            'visibility': '-',
+            'uv_index': '-',
+            'air_quality_index': '-',
+            'feels_like_temperature': '-',
+            'cloud_coverage': '-',
+            'dew_point': '-',
+            'wind_gust': '-',
+            'solar_radiation': '-',
+            'error': f'NETWORK_ERROR: {str(e)}',
+            'message': 'Havo ma\'lumotlarini yuklashda xatolik yuz berdi'
         }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     except Exception as e:
+        # API ishlamagan holda chiziqcha qaytarish
         return Response({
-            'error': f'REAL_WEATHER_API_ERROR: {str(e)}',
-            'message': 'Real weather API processing failed - no mock data available',
-            'required_action': 'Check API key and request parameters',
-            'source': 'REAL_API_PROCESSING_FAILED'
+            'location': '-',
+            'temperature': '-',
+            'humidity': '-',
+            'pressure': '-',
+            'wind_speed': '-',
+            'wind_direction': '-',
+            'rainfall': '-',
+            'weather_condition': 'Malumotlarni yuklashda xatolik',
+            'icon': '-',
+            'visibility': '-',
+            'uv_index': '-',
+            'air_quality_index': '-',
+            'feels_like_temperature': '-',
+            'cloud_coverage': '-',
+            'dew_point': '-',
+            'wind_gust': '-',
+            'solar_radiation': '-',
+            'error': f'WEATHER_API_ERROR: {str(e)}',
+            'message': 'Havo ma\'lumotlarini yuklashda xatolik yuz berdi'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -429,13 +479,19 @@ def get_weather_forecast(request):
         
     except requests.exceptions.RequestException as e:
         return Response({
-            'error': f'Network error accessing Forecast API: {str(e)}',
-            'message': 'Please check internet connection and API key'
+            'success': False,
+            'error': f'Network error: {str(e)}',
+            'message': 'Ob-havo prognozini yuklashda xatolik yuz berdi',
+            'forecasts': [],
+            'forecast_days': 0
         }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     except Exception as e:
         return Response({
-            'error': f'Forecast API processing error: {str(e)}',
-            'message': 'Error processing forecast data'
+            'success': False,
+            'error': f'Forecast error: {str(e)}',
+            'message': 'Ob-havo prognozini qayta ishlashda xatolik',
+            'forecasts': [],
+            'forecast_days': 0
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

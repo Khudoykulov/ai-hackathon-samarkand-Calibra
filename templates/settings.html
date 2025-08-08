@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sug'orish - Sozlamalar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 0;
+        }
+
+        .nav-links a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 135, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #00ff87;
+        }
+
+        .grid-2 { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+        }
+
+        .control-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .control-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #60efff;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            min-width: 120px;
+        }
+
+        .control-btn.start {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            color: #1e3c72;
+        }
+
+        .control-btn.stop {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .control-btn.auto {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-display {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+
+        .status-label {
+            color: #60efff;
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 135, 0.3);
+            color: #00ff87;
+        }
+
+        .status-inactive {
+            background: rgba(255, 154, 0, 0.3);
+            color: #ff9a00;
+        }
+
+        .status-error {
+            background: rgba(255, 65, 108, 0.3);
+            color: #ff416c;
+        }
+
+        .settings-form {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #60efff;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(96, 239, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #60efff;
+            box-shadow: 0 0 10px rgba(96, 239, 255, 0.3);
+        }
+
+        .form-select option {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3.5s forwards;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: 2px solid #ff416c;
+        }
+
+        .notification.warning {
+            background: linear-gradient(45deg, #ff9a00, #ffcd00);
+            border: 2px solid #ff9a00;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            border: 2px solid #00ff87;
+        }
+
+        .notification.info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: 2px solid #667eea;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        .section-description {
+            opacity: 0.8;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .water-level {
+            background: rgba(96, 239, 255, 0.1);
+            border: 2px solid rgba(96, 239, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .water-level-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .water-level-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+            }
+            
+            .control-btn {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span>🤖</span>
+                AI Sug'orish Tizimi
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">🏠 Dashboard</a></li>
+                <li><a href="/weather.html">🌤️ Ob-havo</a></li>
+                <li><a href="/sensors.html">📡 Datchilar</a></li>
+                <li><a href="/ai.html">🧠 AI Tahlil</a></li>
+                <li><a href="/settings.html" class="active">⚙️ Sozlamalar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Manual Irrigation Control -->
+        <div class="grid-2">
+            <div class="panel">
+                <h2>🚿 Qo'lda Sug'orish Boshqaruvi</h2>
+                <p class="section-description">
+                    Sug'orish tizimini qo'lda boshqarish. AI dan mustaqil ravishda suv ochish va yopish imkoniyati.
+                </p>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        💧 Asosiy Sug'orish Tizimi
+                    </div>
+                    
+                    <div class="status-display">
+                        <div class="status-item">
+                            <span class="status-label">Holat:</span>
+                            <span id="mainSystemStatus" class="status-value status-inactive">O'CHIRILGAN</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Suv bosimi:</span>
+                            <span id="waterPressure" class="status-value">- Bar</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Oqim tezligi:</span>
+                            <span id="flowRate" class="status-value">- L/min</span>
+                        </div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="control-btn start" onclick="startIrrigation('main')">
+                            ▶️ Boshlash
+                        </button>
+                        <button class="control-btn stop" onclick="stopIrrigation('main')">
+                            ⏹️ To'xtatish
+                        </button>
+                        <button class="control-btn auto" onclick="enableAutoMode('main')">
+                            🤖 AI Rejimi
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        🌱 A Sektori (Pomidor)
+                    </div>
+                    
+                    <div class="status-display">
+                        <div class="status-item">
+                            <span class="status-label">Holat:</span>
+                            <span id="sectorAStatus" class="status-value status-inactive">O'CHIRILGAN</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Oxirgi sug'orish:</span>
+                            <span id="sectorALastWater" class="status-value">2 soat oldin</span>
+                        </div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="control-btn start" onclick="startIrrigation('sectorA')">
+                            💧 Sug'orish
+                        </button>
+                        <button class="control-btn stop" onclick="stopIrrigation('sectorA')">
+                            ⏹️ To'xtatish
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        🥒 B Sektori (Bodring)
+                    </div>
+                    
+                    <div class="status-display">
+                        <div class="status-item">
+                            <span class="status-label">Holat:</span>
+                            <span id="sectorBStatus" class="status-value status-inactive">O'CHIRILGAN</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Oxirgi sug'orish:</span>
+                            <span id="sectorBLastWater" class="status-value">4 soat oldin</span>
+                        </div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="control-btn start" onclick="startIrrigation('sectorB')">
+                            💧 Sug'orish
+                        </button>
+                        <button class="control-btn stop" onclick="stopIrrigation('sectorB')">
+                            ⏹️ To'xtatish
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🤖 AI Boshqaruv Sozlamalari</h2>
+                <p class="section-description">
+                    AI tizimi sozlamalari va avtomatik sug'orish parametrlari.
+                </p>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>🧠 AI Boshqaruv Rejimi</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="aiControlMode" onchange="toggleAIMode()">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="aiModeLabel">O'chirilgan</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="aiSensitivity">⚖️ AI Sezgirlik Darajasi</label>
+                        <select id="aiSensitivity" class="form-select">
+                            <option value="low">Past - Faqat kritik holatda</option>
+                            <option value="medium" selected>O'rta - Muvozanatli</option>
+                            <option value="high">Yuqori - Tez javob berish</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wateringDuration">⏱️ Standart Sug'orish Vaqti (daqiqa)</label>
+                        <input type="number" id="wateringDuration" class="form-input" value="15" min="1" max="120">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="minMoistureLevel">🌍 Minimal Namlik Darajasi (%)</label>
+                        <input type="number" id="minMoistureLevel" class="form-input" value="30" min="10" max="80">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📊 Sensorlar Tekshiruv Oralig'i</label>
+                        <select id="sensorCheckInterval" class="form-select">
+                            <option value="5">Har 5 daqiqada</option>
+                            <option value="10" selected>Har 10 daqiqada</option>
+                            <option value="15">Har 15 daqiqada</option>
+                            <option value="30">Har 30 daqiqada</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🚨 Favqulodda Rejim</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emergencyMode" onchange="toggleEmergencyMode()">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="emergencyModeLabel">O'chirilgan</span>
+                        </div>
+                        <small style="opacity: 0.7; font-size: 0.85rem;">Kritik namlik darajasida avtomatik sug'orish</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Water Tank Status -->
+        <div class="panel">
+            <h2>🛢️ Suv Ombori Holati</h2>
+            
+            <div class="grid-2">
+                <div class="water-level">
+                    <h3 style="margin-bottom: 10px;">💧 Asosiy Suv Ombori</h3>
+                    <div class="water-level-bar">
+                        <div id="mainTankLevel" class="water-level-fill" style="width: 75%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span id="mainTankVolume">750L / 1000L</span>
+                        <span id="mainTankPercent" style="color: #00ff87; font-weight: bold;">75%</span>
+                    </div>
+                </div>
+
+                <div class="water-level">
+                    <h3 style="margin-bottom: 10px;">🚰 Yordamchi Ombor</h3>
+                    <div class="water-level-bar">
+                        <div id="reserveTankLevel" class="water-level-fill" style="width: 45%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span id="reserveTankVolume">225L / 500L</span>
+                        <span id="reserveTankPercent" style="color: #ff9a00; font-weight: bold;">45%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-buttons" style="margin-top: 20px;">
+                <button class="control-btn auto" onclick="refillTanks()">
+                    🚰 Omborlarni To'ldirish
+                </button>
+                <button class="control-btn" onclick="checkWaterQuality()">
+                    🧪 Suv Sifatini Tekshirish
+                </button>
+                <button class="control-btn" onclick="updateWaterLevels()">
+                    🔄 Daraja Yangilash
+                </button>
+            </div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="panel">
+            <h2>📝 Tizim Jurnali</h2>
+            <div id="systemLogs" style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; font-family: monospace; font-size: 0.9rem; max-height: 300px; overflow-y: auto;">
+                <!-- Logs will be loaded here -->
+            </div>
+            <div class="control-buttons" style="margin-top: 15px;">
+                <button class="control-btn" onclick="refreshLogs()">
+                    🔄 Jurnalni Yangilash
+                </button>
+                <button class="control-btn" onclick="clearLogs()">
+                    🗑️ Jurnalni Tozalash
+                </button>
+                <button class="control-btn" onclick="exportLogs()">
+                    📄 Eksport Qilish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Settings page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('⚙️ Settings page initialized');
+            loadSystemStatus();
+            loadSystemLogs();
+            
+            // Auto refresh every 30 seconds
+            setInterval(loadSystemStatus, 30000);
+        });
+
+        // System status variables
+        let systemStatus = {
+            main: false,
+            sectorA: false,
+            sectorB: false,
+            aiMode: false,
+            emergencyMode: false
+        };
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = '';
+            switch(type) {
+                case 'error': icon = '❌ '; break;
+                case 'warning': icon = '⚠️ '; break;
+                case 'success': icon = '✅ '; break;
+                case 'info': icon = 'ℹ️ '; break;
+            }
+            
+            notification.innerHTML = `${icon}${message}`;
+            notification.addEventListener('click', () => notification.remove());
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                // Simulate system data - in real app would fetch from API
+                updateSystemDisplay();
+                updateWaterLevels();
+            } catch (error) {
+                console.error('System status error:', error);
+                showNotification('Tizim holatini yuklab bo\'lmadi', 'error');
+            }
+        }
+
+        // Update system display
+        function updateSystemDisplay() {
+            // Main system
+            const mainStatus = document.getElementById('mainSystemStatus');
+            const pressure = document.getElementById('waterPressure');
+            const flowRate = document.getElementById('flowRate');
+            
+            if (systemStatus.main) {
+                mainStatus.textContent = 'FAOL';
+                mainStatus.className = 'status-value status-active';
+                pressure.textContent = '2.3 Bar';
+                flowRate.textContent = '25 L/min';
+            } else {
+                mainStatus.textContent = 'O\'CHIRILGAN';
+                mainStatus.className = 'status-value status-inactive';
+                pressure.textContent = '0 Bar';
+                flowRate.textContent = '0 L/min';
+            }
+
+            // Sectors
+            updateSectorStatus('sectorA', systemStatus.sectorA);
+            updateSectorStatus('sectorB', systemStatus.sectorB);
+        }
+
+        // Update sector status
+        function updateSectorStatus(sectorId, isActive) {
+            const statusElement = document.getElementById(`${sectorId}Status`);
+            
+            if (isActive) {
+                statusElement.textContent = 'SUG\'ORISH';
+                statusElement.className = 'status-value status-active';
+            } else {
+                statusElement.textContent = 'O\'CHIRILGAN';
+                statusElement.className = 'status-value status-inactive';
+            }
+        }
+
+        // Start irrigation
+        async function startIrrigation(system) {
+            try {
+                showNotification(`${getSystemName(system)} sug'orish boshlandi...`, 'info');
+                
+                // Simulate API call
+                setTimeout(() => {
+                    systemStatus[system] = true;
+                    updateSystemDisplay();
+                    showNotification(`✅ ${getSystemName(system)} sug'orish muvaffaqiyatli boshlandi!`, 'success');
+                    addLog(`${getSystemName(system)} sug'orish boshlandi - Qo'lda boshqaruv`);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Start irrigation error:', error);
+                showNotification(`❌ ${getSystemName(system)} sug'orishni boshlab bo'lmadi`, 'error');
+            }
+        }
+
+        // Stop irrigation
+        async function stopIrrigation(system) {
+            try {
+                showNotification(`${getSystemName(system)} sug'orish to'xtatilmoqda...`, 'warning');
+                
+                setTimeout(() => {
+                    systemStatus[system] = false;
+                    updateSystemDisplay();
+                    showNotification(`✅ ${getSystemName(system)} sug'orish to'xtatildi`, 'success');
+                    addLog(`${getSystemName(system)} sug'orish to'xtatildi - Qo'lda boshqaruv`);
+                }, 800);
+                
+            } catch (error) {
+                console.error('Stop irrigation error:', error);
+                showNotification(`❌ ${getSystemName(system)} sug'orishni to'xtatib bo'lmadi`, 'error');
+            }
+        }
+
+        // Enable auto mode
+        function enableAutoMode(system) {
+            showNotification(`${getSystemName(system)} AI rejimga o'tkazildi`, 'info');
+            addLog(`${getSystemName(system)} AI avtomatik rejimga o'tkazildi`);
+        }
+
+        // Toggle AI mode
+        function toggleAIMode() {
+            const checkbox = document.getElementById('aiControlMode');
+            const label = document.getElementById('aiModeLabel');
+            
+            if (checkbox.checked) {
+                systemStatus.aiMode = true;
+                label.textContent = 'Yoqilgan - AI boshqarmoqda';
+                label.style.color = '#00ff87';
+                showNotification('🤖 AI avtomatik boshqaruv yoqildi', 'success');
+                addLog('AI avtomatik boshqaruv rejimi yoqildi');
+            } else {
+                systemStatus.aiMode = false;
+                label.textContent = 'O\'chirilgan - Qo\'lda boshqaruv';
+                label.style.color = '#ff9a00';
+                showNotification('👤 Qo\'lda boshqaruv rejimiga o\'tildi', 'warning');
+                addLog('AI avtomatik boshqaruv rejimi o\'chirildi');
+            }
+        }
+
+        // Toggle emergency mode
+        function toggleEmergencyMode() {
+            const checkbox = document.getElementById('emergencyMode');
+            const label = document.getElementById('emergencyModeLabel');
+            
+            if (checkbox.checked) {
+                systemStatus.emergencyMode = true;
+                label.textContent = 'Yoqilgan - Favqulodda holat';
+                label.style.color = '#ff416c';
+                showNotification('🚨 Favqulodda rejim yoqildi', 'warning');
+                addLog('Favqulodda sug\'orish rejimi faollashtirildi');
+            } else {
+                systemStatus.emergencyMode = false;
+                label.textContent = 'O\'chirilgan';
+                label.style.color = '#60efff';
+                showNotification('✅ Favqulodda rejim o\'chirildi', 'info');
+                addLog('Favqulodda sug\'orish rejimi o\'chirildi');
+            }
+        }
+
+        // Water tank functions
+        function refillTanks() {
+            showNotification('🚰 Suv omborlari to\'ldirilmoqda...', 'info');
+            
+            setTimeout(() => {
+                // Simulate tank refill
+                document.getElementById('mainTankLevel').style.width = '95%';
+                document.getElementById('mainTankVolume').textContent = '950L / 1000L';
+                document.getElementById('mainTankPercent').textContent = '95%';
+                
+                showNotification('✅ Suv omborlari muvaffaqiyatli to\'ldirildi!', 'success');
+                addLog('Suv omborlari to\'ldirildi - Manual buyruq');
+            }, 2000);
+        }
+
+        function checkWaterQuality() {
+            showNotification('🧪 Suv sifati tekshirilmoqda...', 'info');
+            
+            setTimeout(() => {
+                showNotification('✅ Suv sifati: YAXSHI (pH: 6.8, TDS: 250ppm)', 'success');
+                addLog('Suv sifati tekshirildi - Natija: YAXSHI');
+            }, 1500);
+        }
+
+        function updateWaterLevels() {
+            showNotification('🔄 Suv darajasi yangilanmoqda...', 'info');
+            
+            setTimeout(() => {
+                // Simulate slight water level changes
+                const mainLevel = 70 + Math.random() * 25;
+                const reserveLevel = 40 + Math.random() * 20;
+                
+                document.getElementById('mainTankLevel').style.width = `${mainLevel}%`;
+                document.getElementById('mainTankVolume').textContent = `${Math.round(mainLevel * 10)}L / 1000L`;
+                document.getElementById('mainTankPercent').textContent = `${Math.round(mainLevel)}%`;
+                
+                document.getElementById('reserveTankLevel').style.width = `${reserveLevel}%`;
+                document.getElementById('reserveTankVolume').textContent = `${Math.round(reserveLevel * 5)}L / 500L`;
+                document.getElementById('reserveTankPercent').textContent = `${Math.round(reserveLevel)}%`;
+                
+                showNotification('✅ Suv darajasi yangilandi', 'success');
+            }, 800);
+        }
+
+        // System logs
+        function loadSystemLogs() {
+            const logs = [
+                `[${new Date().toLocaleTimeString()}] Tizim ishga tushirildi`,
+                `[${new Date(Date.now() - 300000).toLocaleTimeString()}] A Sektori - Tuproq namligi: 45%`,
+                `[${new Date(Date.now() - 600000).toLocaleTimeString()}] Ob-havo ma'lumotlari yangilandi`,
+                `[${new Date(Date.now() - 900000).toLocaleTimeString()}] AI tahlil yakunlandi`,
+                `[${new Date(Date.now() - 1200000).toLocaleTimeString()}] B Sektori sug'orish tugallandi`
+            ];
+            
+            const logsContainer = document.getElementById('systemLogs');
+            logsContainer.innerHTML = logs.map(log => `<div style="margin: 5px 0; color: #60efff;">${log}</div>`).join('');
+        }
+
+        function addLog(message) {
+            const logsContainer = document.getElementById('systemLogs');
+            const logEntry = document.createElement('div');
+            logEntry.style.cssText = 'margin: 5px 0; color: #00ff87;';
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsContainer.insertBefore(logEntry, logsContainer.firstChild);
+            
+            // Keep only last 20 logs
+            while (logsContainer.children.length > 20) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+        }
+
+        function refreshLogs() {
+            showNotification('🔄 Jurnal yangilanmoqda...', 'info');
+            setTimeout(() => {
+                loadSystemLogs();
+                showNotification('✅ Jurnal yangilandi', 'success');
+            }, 500);
+        }
+
+        function clearLogs() {
+            document.getElementById('systemLogs').innerHTML = '<div style="color: #ff9a00;">Jurnal tozalandi</div>';
+            showNotification('🗑️ Jurnal tozalandi', 'warning');
+        }
+
+        function exportLogs() {
+            showNotification('📄 Jurnal eksport qilinmoqda...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Jurnal logs_export.txt fayliga saqlandi', 'success');
+            }, 1000);
+        }
+
+        // Helper functions
+        function getSystemName(system) {
+            const names = {
+                'main': 'Asosiy Tizim',
+                'sectorA': 'A Sektori',
+                'sectorB': 'B Sektori'
+            };
+            return names[system] || system;
+        }
+    </script>
+</body>
+</html>

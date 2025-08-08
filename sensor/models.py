@@ -55,10 +55,46 @@ class SensorReading(models.Model):
     
     @classmethod
     def generate_random_reading(cls, sensor):
-        """❌ MOCK DATA GENERATION DISABLED - REAL SENSOR APIs REQUIRED"""
-        raise Exception(f"MOCK_SENSOR_DATA_DISABLED: {sensor.name} requires real sensor API integration. No mock data generation allowed.")
-    
-    # ❌ ALL MOCK DATA GENERATION METHODS REMOVED - REAL SENSOR APIs REQUIRED
+        """Generate random sensor reading for demo purposes"""
+        import random
+        
+        sensor_type = sensor.sensor_type.name.lower()
+        
+        # Generate realistic values based on sensor type
+        if 'moisture' in sensor_type or 'namlik' in sensor_type:
+            value = random.uniform(15, 85)  # Soil moisture percentage
+        elif 'temperature' in sensor_type or 'harorat' in sensor_type:
+            if 'soil' in sensor_type or 'tuproq' in sensor_type:
+                value = random.uniform(12, 30)  # Soil temperature
+            else:
+                value = random.uniform(15, 35)  # Air temperature
+        elif 'humidity' in sensor_type or 'havo' in sensor_type:
+            value = random.uniform(30, 80)  # Air humidity
+        elif 'ph' in sensor_type:
+            value = random.uniform(5.5, 8.2)  # pH level
+        elif 'conductivity' in sensor_type or 'o\'tkazuvchan' in sensor_type:
+            value = random.uniform(0.8, 2.5)  # Electrical conductivity
+        elif 'light' in sensor_type or 'yorug' in sensor_type:
+            value = random.uniform(100, 1200)  # Light intensity W/m²
+        elif 'rainfall' in sensor_type or 'yomg' in sensor_type:
+            value = random.uniform(0, 15) if random.random() < 0.3 else 0  # Rainfall
+        else:
+            value = random.uniform(10, 100)  # Generic sensor
+        
+        # Round to appropriate decimal places
+        value = round(value, 2)
+        
+        # Detect anomaly (5% chance)
+        is_anomaly = random.random() < 0.05
+        
+        # Create and save reading
+        reading = cls.objects.create(
+            sensor=sensor,
+            value=value,
+            is_anomaly=is_anomaly
+        )
+        
+        return reading
 
 
 class WeatherData(models.Model):
