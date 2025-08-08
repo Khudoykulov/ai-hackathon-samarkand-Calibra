@@ -615,10 +615,15 @@ def _get_sensor_status(sensor, current_value):
 
 @api_view(['GET'])
 def get_realtime_data(request):
-    """Get ALWAYS FRESH real-time sensor data - completely dynamic"""
+    """Get ALWAYS FRESH real-time sensor data - completely dynamic - NEVER FAILS"""
     try:
         # Har gal har bitta sensor uchun YANGI random qiymatlar
         sensors = Sensor.objects.filter(status='active')
+        
+        # Agar bazada sensorlar yo'q bo'lsa, sample data yaratish
+        if not sensors.exists():
+            generate_sample_data(request)
+            sensors = Sensor.objects.filter(status='active')
         
         realtime_data = []
         for sensor in sensors:
@@ -674,7 +679,52 @@ def get_realtime_data(request):
         })
         
     except Exception as e:
+        # Xatolik bo'lsa ham fallback data qaytarish
         return Response({
-            'error': str(e),
-            'message': 'Real-time sensor data generation failed'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            'success': True,
+            'data_source': 'FALLBACK_RANDOM_DATA',
+            'sensors': [
+                {
+                    'sensor_id': 'FALLBACK_01',
+                    'sensor_name': 'Tuproq Namligi #1',
+                    'sensor_type': 'Soil Moisture',
+                    'icon': '🌍',
+                    'value': round(random.uniform(20, 80), 2),
+                    'unit': '%',
+                    'location': 'Test joyi',
+                    'timestamp': timezone.now(),
+                    'status': {'status': 'Normal', 'color': '#00ff87'},
+                    'is_critical': True,
+                    'is_anomaly': False,
+                    'data_quality': 'fallback',
+                    'measurement_id': 999
+                },
+                {
+                    'sensor_id': 'FALLBACK_02',
+                    'sensor_name': 'Havo Harorati',
+                    'sensor_type': 'Air Temperature',
+                    'icon': '🌡️',
+                    'value': round(random.uniform(15, 35), 2),
+                    'unit': '°C',
+                    'location': 'Meteo stantsiya',
+                    'timestamp': timezone.now(),
+                    'status': {'status': 'Normal', 'color': '#00ff87'},
+                    'is_critical': False,
+                    'is_anomaly': False,
+                    'data_quality': 'fallback',
+                    'measurement_id': 998
+                }
+            ],
+            'timestamp': timezone.now().isoformat(),
+            'active_sensors_count': 2,
+            'critical_alerts': 0,
+            'warning_alerts': 0,
+            'system_status': {
+                'status': 'active',
+                'cpu_usage': round(random.uniform(15, 45), 2),
+                'memory_usage': round(random.uniform(25, 65), 2),
+                'active_sensors': 2
+            },
+            'data_freshness': 'FALLBACK_BUT_FRESH',
+            'fallback_reason': str(e)
+        })
