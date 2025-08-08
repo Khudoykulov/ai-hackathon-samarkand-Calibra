@@ -14,7 +14,7 @@ else:
 
 import google.generativeai as genai
 
-api_key = 'AIzaSyCVORtht3UZsy3vWfyLt1OEI_sH38ki7tw'  # Get from Google AI Studio
+api_key = 'AIzaSyAHOqrKwINpQTaB_s4fJOjFHZvIe-ZdIbY'  # Get from Google AI Studio
 
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')

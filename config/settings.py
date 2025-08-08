@@ -131,7 +131,7 @@ WEATHER_API_KEY = '158bc1531f8c316715082a34e62dfb88'  # Get from openweathermap.
 WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5'
 
 # Gemini AI settings
-GEMINI_API_KEY = 'AIzaSyCVORtht3UZsy3vWfyLt1OEI_sH38ki7tw....'  # Get from Google AI Studio
+GEMINI_API_KEY = 'AIzaSyBJ-5vhyL-0n4byl4KVbVUGPyP1K4sUbZ8'  # Get from Google AI Studio
 
 # Irrigation system settings
 IRRIGATION_SETTINGS = {

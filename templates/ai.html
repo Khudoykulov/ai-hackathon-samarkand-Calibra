@@ -443,6 +443,15 @@
         <div class="panel ai-decision-panel">
             <h2>🧠 AI Real-time Qaror</h2>
             
+            <!-- API Status Indicator -->
+            <div id="apiStatusIndicator" style="background: rgba(255,154,0,0.2); border: 2px solid #ff9a00; border-radius: 10px; padding: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2rem;">🔄</span>
+                <div>
+                    <strong>API Status:</strong> <span id="apiStatusText">Tekshirilmoqda...</span>
+                    <br><small id="apiStatusDetail">Iltimos kuting...</small>
+                </div>
+            </div>
+            
             <div id="aiDecisionCard" class="decision-card">
                 <div id="aiDecisionTitle" class="decision-title">
                     🔄 AI Tahlil natijasi yuklanmoqda...
@@ -473,6 +482,8 @@
                 <div id="aiActions" class="ai-actions">
                     <button class="action-btn" onclick="triggerAIAnalysis()">🔄 Yangi Tahlil</button>
                     <button class="action-btn" onclick="loadAIData()">📊 Ma'lumotni Yangilash</button>
+                    <button class="action-btn" onclick="testGeminiAPIManual()">🧪 Gemini API Test</button>
+                    <button class="action-btn danger" onclick="forceErrorTest()">⚠️ Error Test</button>
                 </div>
             </div>
         </div>
@@ -522,12 +533,55 @@
     <script>
         // AI page initialization
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🧠 AI Analysis page initialized');
-            loadAIData();
+            console.log('🧠 AI Analysis page initialized - Manual mode only');
+            updateAPIStatus('ready', 'TAYYOR', 'Tugma bosib AI tahlilni boshlang');
             
-            // Auto refresh every 30 seconds
-            setInterval(loadAIData, 30000);
+            // ❌ AUTO-REFRESH O'CHIRILDI - faqat manual request
+            console.log('⚠️ Auto-refresh o\'chirildi - faqat manual tugmalar');
+            
+            // Show ready message
+            setTimeout(() => {
+                showNotification('✅ AI sahifasi tayyor - tugmalarni bosib foydalaning', 'info');
+            }, 1000);
         });
+
+        // Update API status indicator
+        function updateAPIStatus(status, text, detail) {
+            const indicator = document.getElementById('apiStatusIndicator');
+            const statusText = document.getElementById('apiStatusText');
+            const statusDetail = document.getElementById('apiStatusDetail');
+            
+            switch(status) {
+                case 'working':
+                    indicator.style.background = 'rgba(0,255,135,0.2)';
+                    indicator.style.border = '2px solid #00ff87';
+                    indicator.querySelector('span').textContent = '✅';
+                    break;
+                case 'error':
+                    indicator.style.background = 'rgba(255,65,108,0.2)';
+                    indicator.style.border = '2px solid #ff416c';
+                    indicator.querySelector('span').textContent = '❌';
+                    break;
+                case 'fallback':
+                    indicator.style.background = 'rgba(255,154,0,0.2)';
+                    indicator.style.border = '2px solid #ff9a00';
+                    indicator.querySelector('span').textContent = '⚠️';
+                    break;
+                case 'checking':
+                    indicator.style.background = 'rgba(96,239,255,0.2)';
+                    indicator.style.border = '2px solid #60efff';
+                    indicator.querySelector('span').textContent = '🔄';
+                    break;
+                case 'ready':
+                    indicator.style.background = 'rgba(96,239,255,0.1)';
+                    indicator.style.border = '2px solid #60efff';
+                    indicator.querySelector('span').textContent = '⭐';
+                    break;
+            }
+            
+            statusText.textContent = text;
+            statusDetail.textContent = detail;
+        }
 
         // Notification function
         function showNotification(message, type = 'info') {
@@ -559,37 +613,127 @@
         async function loadAIData() {
             try {
                 showNotification('AI tahlil ma\'lumotlari yuklanmoqda...', 'info');
+                console.log('🔍 [AI DEBUG] API request boshlandi...');
                 
                 const response = await fetch('/api/ai/comprehensive-analysis/', {
                     method: 'POST'
                 });
                 
+                console.log('🔍 [AI DEBUG] Response status:', response.status);
+                
                 // ❌ STRICT API ERROR CHECK - Gemini API ishlamasa qat'iq feedback
                 if (!response.ok) {
+                    console.error('🚨 [AI DEBUG] HTTP Error:', response.status);
                     showStrictAIError(`HTTP ${response.status}: Gemini API ishlamayapti`);
                     showNotification(`❌ AI API xatolik ${response.status}: Gemini API ulanishmadi`, 'error');
                     return;
                 }
                 
                 const data = await response.json();
+                console.log('🔍 [AI DEBUG] Full API response:', data);
                 
-                // ❌ STRICT DATA VALIDATION - xatolik bo'lsa darhol "-" ko'rsatish
-                if (data.error || !data.analysis_result || data.source === 'FALLBACK_ANALYSIS') {
-                    const errorMsg = data.error || 'Gemini AI API ishlamayapti - fallback rejim';
+                // ❌ QATTIQ STRICT CHECK - FALLBACK ham xatolik!
+                if (data.error || !data.analysis_result) {
+                    const errorMsg = data.error || 'API xatolik - ma\'lumot topilmadi';
+                    console.error('🚨 [AI DEBUG] Data error:', errorMsg);
                     showStrictAIError(errorMsg);
                     showNotification(`❌ AI xatolik: ${errorMsg}`, 'error');
                     return;
                 }
                 
+                // ❌ FALLBACK ANALYSIS = XATOLIK (QATTIQ RIOYA QIL!)
+                if (data.analysis_result.source === 'FALLBACK_ANALYSIS' || data.source === 'FALLBACK_ANALYSIS') {
+                    console.error('🚨 [AI DEBUG] FALLBACK detected - treating as ERROR');
+                    updateAPIStatus('fallback', 'FALLBACK REJIM', 'Gemini AI API ishlamayapti - fallback data');
+                    showStrictAIError('Gemini AI API ishlamayapti - fallback rejim ham xatolik');
+                    showNotification('❌ Gemini AI API XATOLIK: Fallback rejimi ham muammo', 'error');
+                    return;
+                }
+                
+                console.log('✅ [AI DEBUG] Valid AI data received');
+                updateAPIStatus('working', 'GEMINI API FAOL', 'Real Gemini AI ma\'lumotlari olinmoqda');
                 updateAIDisplay(data.analysis_result);
                 showNotification('✅ AI tahlil ma\'lumotlari yangilandi (Gemini API)', 'success');
                 
             } catch (error) {
-                console.error('AI network error:', error);
+                console.error('🚨 [AI DEBUG] Network error:', error);
+                updateAPIStatus('error', 'NETWORK XATOLIK', 'API ga ulanib bo\'lmadi: ' + error.message);
                 showStrictAIError('Network xatolik: Gemini API ga ulanib bo\'lmadi');
                 showNotification('❌ Network xatolik: AI ma\'lumotlarini yuklab bo\'lmadi', 'error');
             }
         }
+
+        // TEST GEMINI API - Real-time debug (silent version for intervals)
+        async function testGeminiAPI(showNotifications = false) {
+            console.log('🧪 [GEMINI TEST] Testing API status...');
+            if (showNotifications) showNotification('🧪 Gemini API test boshlandi...', 'info');
+            
+            try {
+                const response = await fetch('/api/ai/comprehensive-analysis/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('🧪 [GEMINI TEST] API Response:', data);
+                
+                if (data.analysis_result?.source === 'FALLBACK_ANALYSIS' || data.source === 'FALLBACK_ANALYSIS') {
+                    updateAPIStatus('fallback', 'FALLBACK REJIM', 'Gemini API ishlamayapti - fallback ma\'lumot');
+                    if (showNotifications) showNotification('🚨 GEMINI API XATOLIK: Fallback rejimda ishlayapti', 'error');
+                    console.error('🚨 [GEMINI TEST] FALLBACK MODE - API not working');
+                } else if (data.analysis_result?.gemini_analysis) {
+                    updateAPIStatus('working', 'GEMINI API FAOL', 'Real AI tahlil ma\'lumotlari mavjud');
+                    if (showNotifications) showNotification('✅ GEMINI API ISHLAYAPTI: Real data received', 'success');
+                    console.log('✅ [GEMINI TEST] GEMINI API working correctly');
+                } else {
+                    updateAPIStatus('error', 'NOANIQ HOLAT', 'API javob noto\'g\'ri formatda');
+                    if (showNotifications) showNotification('❌ GEMINI API: Noaniq holat', 'warning');
+                    console.warn('⚠️ [GEMINI TEST] Unknown API state');
+                }
+            } catch (error) {
+                updateAPIStatus('error', 'ULANISH XATOLIK', 'Network yoki server xatoligi');
+                console.error('🚨 [GEMINI TEST] Error:', error);
+                if (showNotifications) showNotification('❌ GEMINI API Test xatolik: ' + error.message, 'error');
+            }
+        }
+
+        // Manual API test with notifications
+        function testGeminiAPIManual() {
+            testGeminiAPI(true);
+        }
+
+        // Force Error Test
+        function forceErrorTest() {
+            console.log('⚠️ [ERROR TEST] Forcing error display...');
+            updateAPIStatus('error', 'TEST XATOLIK', 'Bu faqat test - haqiqiy xatolik emas');
+            showStrictAIError('Test xatolik - bu faqat test');
+            showNotification('⚠️ Test xatolik ko\'rsatildi', 'warning');
+        }
+
+        // Clear cache warning
+        function showCacheWarning() {
+            console.warn('🔄 [CACHE WARNING] Agar yangi kod ko\'rinmasa, browser cache\'ni tozalang!');
+            showNotification('🔄 YANGILANISH: Auto-refresh o\'chirildi, manual tugmalar ishlatiladi', 'info');
+        }
+
+        // Debug info - FINAL VERSION
+        console.log('🎯 [AI PAGE] Versiya: 3.0 - MANUAL TUGMALAR + YAXSHILANGAN DISPLAY');
+        console.log('🎯 [AI PAGE] Auto-refresh: O\'CHIRILGAN - faqat manual');
+        console.log('🎯 [AI PAGE] FALLBACK_ANALYSIS: Xatolik deb ko\'rsatiladi');
+        console.log('🎯 [AI PAGE] Real-time status: Yaxshilangan display');
+        console.log('🎯 [AI PAGE] Gemini API Key: Yangilangan (' + '${new Date().toLocaleTimeString()}' + ')');
+
+        // SERVER RESTART WARNING
+        function showServerRestartWarning() {
+            showNotification('⚠️ SERVER RESTART KERAK: Yangi API key ishlatish uchun Django serverni restart qiling!', 'warning');
+            console.warn('⚠️ [SERVER] Django server restart required for new API key');
+        }
+
+        // Show restart warning after 3 seconds
+        setTimeout(showServerRestartWarning, 3000);
 
         // STRICT AI ERROR DISPLAY - barcha ma'lumotlar "-" bo'ladi
         function showStrictAIError(errorMessage) {
@@ -695,58 +839,173 @@
             return '';
         }
 
-        // Update AI display
+        // Update AI display - YANGILANGAN VERSIYA
         function updateAIDisplay(aiData) {
-            if (aiData.gemini_analysis) {
+            console.log('📊 [UPDATE DISPLAY] Updating frontend with AI data:', aiData);
+            
+            // Check if we have valid Gemini analysis
+            if (aiData && aiData.gemini_analysis) {
+                console.log('✅ [UPDATE DISPLAY] Valid Gemini analysis found');
                 const analysis = aiData.gemini_analysis;
                 updateAIDecision(analysis);
+                
+                // YAXSHILANGAN RECOMMENDATIONS LOGIC
+                let recommendationsToShow = [];
+                
+                // 1. Try to get recommendations from top-level API response
+                if (aiData.recommendations && Array.isArray(aiData.recommendations)) {
+                    console.log('📋 [UPDATE DISPLAY] Using top-level recommendations');
+                    recommendationsToShow = aiData.recommendations;
+                }
+                // 2. Try environmental recommendations from Gemini
+                else if (analysis.environmental_recommendations && Array.isArray(analysis.environmental_recommendations)) {
+                    console.log('📋 [UPDATE DISPLAY] Using environmental recommendations');
+                    recommendationsToShow = analysis.environmental_recommendations;
+                }
+                // 3. Try plant health recommendations
+                else if (analysis.plant_health_assessment && analysis.plant_health_assessment.recommendations) {
+                    console.log('📋 [UPDATE DISPLAY] Using plant health recommendations');
+                    recommendationsToShow = analysis.plant_health_assessment.recommendations;
+                }
+                // 4. Try risk factors as recommendations
+                else if (analysis.risk_factors && Array.isArray(analysis.risk_factors)) {
+                    console.log('📋 [UPDATE DISPLAY] Using risk factors as recommendations');
+                    recommendationsToShow = analysis.risk_factors.map(risk => `⚠️ Xavf: ${risk}`);
+                }
+                // 5. Create generic recommendations from analysis
+                else {
+                    console.log('📋 [UPDATE DISPLAY] Creating generic recommendations from analysis');
+                    recommendationsToShow = [
+                        `🚿 Sug'orish: ${analysis.irrigation_recommendation || 'Ma\'lumot yo\'q'}`,
+                        `⏰ Optimal vaqt: ${analysis.optimal_timing || 'Ma\'lumot yo\'q'}`,
+                        `💧 Suv miqdori: ${analysis.irrigation_amount || 'Ma\'lumot yo\'q'}`
+                    ];
+                }
+                
+                updateAIRecommendations(recommendationsToShow);
+            } else {
+                console.warn('⚠️ [UPDATE DISPLAY] No valid Gemini analysis found');
+                updateAIDecision(null);
+                updateAIRecommendations(['AI tahlil ma\'lumotlari topilmadi - API xatolik']);
             }
             
-            if (aiData.insights) {
+            // Update insights
+            if (aiData && aiData.insights && aiData.insights.length > 0) {
+                console.log('✅ [UPDATE DISPLAY] Updating insights');
                 updateAIInsights(aiData.insights);
+            } else {
+                console.log('⚠️ [UPDATE DISPLAY] No insights found');
+                updateAIInsights([]);
             }
             
+            // Always update metrics
             updateAIMetrics(aiData);
         }
 
-        // Update AI decision
+        // Update AI recommendations separately - YAXSHILANGAN
+        function updateAIRecommendations(recommendations) {
+            const recommendationsElement = document.getElementById('aiRecommendations');
+            
+            console.log('📋 [RECOMMENDATIONS] Input recommendations:', recommendations);
+            
+            if (!recommendations || recommendations.length === 0) {
+                recommendationsElement.innerHTML = '<li style="color: #ff9a00;">❌ Tavsiyalar topilmadi</li>';
+                console.warn('⚠️ [RECOMMENDATIONS] No recommendations found');
+                return;
+            }
+            
+            recommendationsElement.innerHTML = '';
+            
+            recommendations.forEach((rec, index) => {
+                const li = document.createElement('li');
+                li.style.cssText = 'margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; border-left: 3px solid #60efff;';
+                
+                let recText = '';
+                let priorityIcon = '📝';
+                
+                if (typeof rec === 'string') {
+                    recText = rec;
+                } else if (rec.description) {
+                    // API dan kelgan structured recommendations
+                    const priority = rec.priority || 'normal';
+                    const duration = rec.estimated_duration || '';
+                    
+                    if (priority === 1 || priority === 'critical' || priority === 'high') {
+                        priorityIcon = '🚨';
+                        li.style.borderLeft = '3px solid #ff416c';
+                    } else if (priority === 2 || priority === 'warning') {
+                        priorityIcon = '⚠️';
+                        li.style.borderLeft = '3px solid #ff9a00';
+                    }
+                    
+                    recText = `${priorityIcon} ${rec.description}`;
+                    if (duration) recText += ` (${duration})`;
+                } else if (rec.action) {
+                    recText = `${priorityIcon} ${rec.action}`;
+                } else {
+                    recText = `${priorityIcon} ${JSON.stringify(rec)}`;
+                }
+                
+                li.innerHTML = recText;
+                recommendationsElement.appendChild(li);
+                
+                console.log(`✅ [RECOMMENDATIONS] Added: ${recText}`);
+            });
+            
+            console.log(`✅ [RECOMMENDATIONS] Updated with ${recommendations.length} items`);
+        }
+
+        // Update AI decision - YAXSHILANGAN
         function updateAIDecision(analysis) {
             const card = document.getElementById('aiDecisionCard');
             const title = document.getElementById('aiDecisionTitle');
             const text = document.getElementById('aiDecisionText');
-            const recommendations = document.getElementById('aiRecommendations');
             
-            // Determine decision type
+            console.log('🎯 [UPDATE DECISION] Processing analysis:', analysis);
+            
+            if (!analysis) {
+                card.className = 'decision-card critical';
+                title.innerHTML = '❌ Ma\'lumot Yo\'q';
+                text.textContent = 'AI tahlil ma\'lumotlari topilmadi yoki xatolik yuz berdi.';
+                return;
+            }
+            
+            // Determine decision type from analysis
             let cardClass = 'normal';
             let titleText = '✅ Normal Holat';
             let decisionText = 'AI tahlili bo\'yicha hozircha darhol harakat shart emas.';
             
+            // Check irrigation recommendation
             if (analysis.irrigation_recommendation) {
-                const rec = analysis.irrigation_recommendation;
-                if (rec.includes('KRITIK')) {
+                const rec = analysis.irrigation_recommendation.toLowerCase();
+                console.log('🚿 [UPDATE DECISION] Irrigation rec:', analysis.irrigation_recommendation);
+                
+                if (rec.includes('kritik') || rec.includes('critical')) {
                     cardClass = 'critical';
                     titleText = '🚨 KRITIK - Darhol Harakat Kerak!';
                     decisionText = 'AI tizimi kritik vaziyatni aniqladi. Darhol sug\'orish boshlash tavsiya etiladi.';
-                } else if (rec.includes('YUQORI')) {
+                } else if (rec.includes('yuqori') || rec.includes('high') || rec.includes('kerak')) {
                     cardClass = 'warning';
-                    titleText = '⚠️ YUQORI PRIORITET';
-                    decisionText = 'AI tizimi yuqori prioritetli harakat tavsiya etadi.';
+                    titleText = '⚠️ DIQQAT - Sug\'orish Kerak';
+                    decisionText = 'AI tizimi sug\'orish kerakligini bildirdi.';
+                } else if (rec.includes('yaxshi') || rec.includes('good')) {
+                    cardClass = 'normal';
+                    titleText = '✅ Yaxshi Holat';
+                    decisionText = 'AI tahlili - hozircha sug\'orish kerak emas.';
                 }
+            }
+            
+            // Update detailed reasoning if available
+            if (analysis.detailed_reasoning) {
+                decisionText = analysis.detailed_reasoning.substring(0, 200) + '...';
+                console.log('📝 [UPDATE DECISION] Using detailed reasoning');
             }
             
             card.className = `decision-card ${cardClass}`;
             title.innerHTML = titleText;
             text.textContent = decisionText;
             
-            // Update recommendations
-            if (analysis.plant_health_assessment && analysis.plant_health_assessment.recommendations) {
-                recommendations.innerHTML = '';
-                analysis.plant_health_assessment.recommendations.forEach(rec => {
-                    const li = document.createElement('li');
-                    li.textContent = rec;
-                    recommendations.appendChild(li);
-                });
-            }
+            console.log(`✅ [UPDATE DECISION] Updated: ${titleText} - ${cardClass}`);
         }
 
         // Update AI metrics
@@ -776,25 +1035,76 @@
             document.getElementById('analysisCount').textContent = Math.floor(Math.random() * 1000);
         }
 
-        // Update AI insights
+        // Update AI insights - MUKAMMAL VERSIYA
         function updateAIInsights(insights) {
             const container = document.getElementById('aiInsights');
             container.innerHTML = '';
             
+            console.log('💡 [INSIGHTS] Input insights:', insights);
+            
             if (!insights || insights.length === 0) {
-                container.innerHTML = '<div class="insight-card"><div class="insight-title">Ma\'lumot yo\'q</div><div class="insight-description">AI tushunchalari topilmadi</div></div>';
+                container.innerHTML = '<div class="insight-card" style="border-left: 4px solid #ff9a00;"><div class="insight-title">❌ Tushunchalar yo\'q</div><div class="insight-description">AI tushunchalari topilmadi yoki xatolik yuz berdi</div></div>';
+                console.warn('⚠️ [INSIGHTS] No insights provided');
                 return;
             }
             
-            insights.forEach(insight => {
+            insights.forEach((insight, index) => {
                 const card = document.createElement('div');
                 card.className = 'insight-card';
-                card.innerHTML = `
-                    <div class="insight-title">${insight.title || 'AI Tushunchasi'}</div>
-                    <div class="insight-description">${insight.description || 'Ma\'lumot yo\'q'}</div>
+                
+                // Prioritet bo'yicha rang berish
+                let borderColor = '#60efff'; // default
+                let priorityIcon = '💡';
+                
+                if (insight.type === 'critical' || insight.priority === 'critical' || insight.type === 'urgent_action') {
+                    borderColor = '#ff416c';
+                    priorityIcon = '🚨';
+                } else if (insight.type === 'warning' || insight.priority === 'high') {
+                    borderColor = '#ff9a00';
+                    priorityIcon = '⚠️';
+                } else if (insight.type === 'success' || insight.type === 'ai_analysis') {
+                    borderColor = '#00ff87';
+                    priorityIcon = '✅';
+                }
+                
+                card.style.cssText = `
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 15px;
+                    padding: 20px;
+                    border-left: 4px solid ${borderColor};
+                    margin-bottom: 15px;
+                    transition: transform 0.3s ease;
                 `;
+                
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.boxShadow = `0 5px 20px rgba(0,0,0,0.2)`;
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                    card.style.boxShadow = 'none';
+                });
+                
+                const title = insight.title || `AI Tushunchasi ${index + 1}`;
+                const description = insight.description || 'Batafsil ma\'lumot topilmadi';
+                const priority = insight.priority || insight.type || '';
+                
+                card.innerHTML = `
+                    <div class="insight-title" style="color: ${borderColor}; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        ${priorityIcon} ${title}
+                        ${priority ? `<span style="font-size: 0.8rem; padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 10px;">${priority.toUpperCase()}</span>` : ''}
+                    </div>
+                    <div class="insight-description" style="opacity: 0.9; line-height: 1.4;">
+                        ${description}
+                    </div>
+                `;
+                
                 container.appendChild(card);
+                console.log(`💡 [INSIGHTS] Added: ${title} (${priority || 'normal'})`);
             });
+            
+            console.log(`✅ [INSIGHTS] Updated with ${insights.length} insights`);
         }
 
 
