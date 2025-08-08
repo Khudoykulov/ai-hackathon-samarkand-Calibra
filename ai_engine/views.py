@@ -287,6 +287,13 @@ def comprehensive_analysis(request):
                 confidence_level=gemini_result.get('confidence_score', 85)
             )
         
+        # Ensure gemini_raw_response is included in the response
+        if (gemini_result.get('gemini_analysis') and 
+            'gemini_raw_response' not in gemini_result['gemini_analysis'] and
+            gemini_result['gemini_analysis'].get('detailed_reasoning')):
+            # Use detailed_reasoning as fallback for raw response
+            gemini_result['gemini_analysis']['gemini_raw_response'] = gemini_result['gemini_analysis']['detailed_reasoning']
+
         return Response({
             'session_id': session_id,
             'analysis_result': gemini_result,

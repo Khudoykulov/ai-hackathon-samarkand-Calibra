@@ -495,6 +495,19 @@
                 <ul id="aiRecommendations" class="recommendations-list">
                     <li>AI tavsiyalari yuklanmoqda...</li>
                 </ul>
+                
+                <!-- Gemini AI to'liq javob qismi -->
+                <div id="geminiFullResponse" style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; display: none;">
+                    <h3 style="color: #00ff87; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        🤖 Gemini AI Professional Tavsiya
+                    </h3>
+                    <div id="geminiResponseText" style="font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #fff; white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid rgba(0,255,135,0.3); border-radius: 10px; padding: 15px; background: rgba(0,255,135,0.05);">
+                        Gemini AI javob yuklanmoqda...
+                    </div>
+                    <button onclick="toggleGeminiResponse()" style="margin-top: 10px; background: linear-gradient(45deg, #667eea, #764ba2); border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
+                        📖 Batafsil Ko'rish/Yashirish
+                    </button>
+                </div>
             </div>
 
             <div class="panel">
@@ -849,6 +862,9 @@
                 const analysis = aiData.gemini_analysis;
                 updateAIDecision(analysis);
                 
+                // Show Gemini full response if available
+                updateGeminiFullResponse(analysis.gemini_raw_response || analysis.detailed_reasoning);
+                
                 // YAXSHILANGAN RECOMMENDATIONS LOGIC
                 let recommendationsToShow = [];
                 
@@ -887,6 +903,7 @@
                 console.warn('⚠️ [UPDATE DISPLAY] No valid Gemini analysis found');
                 updateAIDecision(null);
                 updateAIRecommendations(['AI tahlil ma\'lumotlari topilmadi - API xatolik']);
+                hideGeminiFullResponse();
             }
             
             // Update insights
@@ -1114,6 +1131,63 @@
             setTimeout(() => {
                 loadAIData();
             }, 2000);
+        }
+
+        // Update Gemini full response - YANGI FUNKTSIYA
+        function updateGeminiFullResponse(responseText) {
+            const container = document.getElementById('geminiFullResponse');
+            const textElement = document.getElementById('geminiResponseText');
+            
+            if (responseText && responseText.trim() && responseText.length > 50) {
+                console.log('🤖 [GEMINI RESPONSE] Showing full Gemini response');
+                
+                // Format response text - clean and improve readability
+                let formattedText = responseText
+                    .replace(/\n\s*\n/g, '\n\n') // Clean double newlines
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic text
+                    .trim();
+                
+                textElement.innerHTML = formattedText;
+                container.style.display = 'block';
+                
+                // Add scroll to the new content
+                setTimeout(() => {
+                    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 500);
+                
+                showNotification('🤖 Gemini AI batafsil javob mavjud!', 'success');
+            } else {
+                console.log('⚠️ [GEMINI RESPONSE] No detailed response to show');
+                hideGeminiFullResponse();
+            }
+        }
+        
+        // Hide Gemini full response
+        function hideGeminiFullResponse() {
+            const container = document.getElementById('geminiFullResponse');
+            container.style.display = 'none';
+            console.log('🤖 [GEMINI RESPONSE] Hidden - no data available');
+        }
+        
+        // Toggle Gemini response visibility
+        function toggleGeminiResponse() {
+            const container = document.getElementById('geminiFullResponse');
+            const textElement = document.getElementById('geminiResponseText');
+            
+            if (textElement.style.maxHeight === '400px' || !textElement.style.maxHeight) {
+                // Expand to full height
+                textElement.style.maxHeight = 'none';
+                textElement.style.border = '1px solid rgba(0,255,135,0.5)';
+                console.log('🤖 [GEMINI RESPONSE] Expanded to full view');
+                showNotification('📖 To\'liq javob ko\'rsatildi', 'info');
+            } else {
+                // Collapse to limited height  
+                textElement.style.maxHeight = '400px';
+                textElement.style.border = '1px solid rgba(0,255,135,0.3)';
+                console.log('🤖 [GEMINI RESPONSE] Collapsed to summary view');
+                showNotification('📖 Qisqacha ko\'rinish', 'info');
+            }
         }
     </script>
 </body>

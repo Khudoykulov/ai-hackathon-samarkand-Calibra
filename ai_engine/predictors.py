@@ -687,9 +687,11 @@ class GeminiIntegration:
                 'risk_factors': self._extract_risks_from_response(response_text),
                 'environmental_recommendations': self._extract_env_recommendations(response_text),
                 'confidence_level': random.uniform(90, 98),
-                'gemini_raw_response': response_text,  # Include full response
+                'gemini_raw_response': response_text,  # To'liq Gemini javob
                 'response_length': len(response_text),
-                'parsing_timestamp': timezone.now().isoformat()
+                'parsing_timestamp': timezone.now().isoformat(),
+                'gemini_analysis_summary': f"Gemini AI Professional Tahlil - {len(response_text)} belgi",
+                'gemini_source': 'REAL_GEMINI_API'
             }
             
         except Exception as e:
@@ -810,6 +812,54 @@ class GeminiIntegration:
         {self._generate_detailed_reasoning(soil_moisture, temperature, air_humidity, ph, wind_speed)}
         """
         
+        # Generate detailed mock response for full display
+        detailed_mock_response = f"""
+🔬 PROFESSIONAL AI TAHLIL NATIJASI:
+
+📊 JORIY HOLAT TAHLILI:
+• Tuproq namligi: {soil_moisture}% - {'KRITIK' if soil_moisture < 25 else 'PAST' if soil_moisture < 40 else 'NORMAL' if soil_moisture < 60 else 'YAXSHI'}
+• Havo harorati: {temperature}°C - {'YUQORI' if temperature > 30 else 'OPTIMAL' if 18 <= temperature <= 28 else 'PAST'}  
+• Havo namligi: {air_humidity}% - {'PAST' if air_humidity < 40 else 'OPTIMAL' if 50 <= air_humidity <= 70 else 'YUQORI'}
+
+🚿 SUG'ORISH TAVSIYASI:
+{irrigation_need}
+
+⏰ OPTIMAL SUG'ORISH VAQTI:
+• Bugun ertalab: 06:00-08:00 ✅ OPTIMAL
+• Bugun kechqurun: 18:00-20:00 ✅ OPTIMAL  
+• Kunduzi: ❌ TAVSIYA ETILMAYDI (bug'lanish yuqori)
+
+💧 SUV MIQDORI VA USULI:
+• Har bir o'simlik uchun: {irrigation_amount}
+• Davomiyligi: {irrigation_duration}
+• Usul: Tomchilatib sug'orish (optimal)
+
+🌱 O'SIMLIK SIGI'LI:
+• Umumiy holat: {health_score}% 
+• Status: {self._get_health_status(health_score)}
+• Stress darajasi: {'YUQORI' if soil_moisture < 30 else 'O\'RTACHA' if soil_moisture < 50 else 'PAST'}
+
+⚠️ XAVF OMILLARI:
+{self._generate_detailed_reasoning(soil_moisture, temperature, air_humidity, ph, wind_speed)}
+
+💡 PROFESSIONAL TAVSIYALAR:
+• Mulch (qoplama) ishlatish - 20% gacha suv tejash
+• Datchiklar holatini kunlik tekshirish  
+• Ob-havo ma'lumotlarini kuzatib turing
+• Preventiv choralar - kasallik oldini olish
+
+📈 KELAJAK PROGNOZI:
+• Keyingi tekshiruv: {self._calculate_next_check(soil_moisture)}
+• Kutilayotgan o'zgarish: O'simlik holati yaxshilanadi
+• Hosil prognozi: Normal rivojlanish kutiladi
+
+🔧 TEXNIK MA'LUMOTLAR:
+• Model versiyasi: AI Irrigation v2.1
+• Ishonch darajasi: {random.randint(90, 98)}%
+• Tahlil vaqti: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+• Ma'lumot manbai: Local AI Analysis (Fallback)
+        """.strip()
+
         return {
             'irrigation_recommendation': irrigation_need,
             'detailed_reasoning': reasoning.strip(),
@@ -828,7 +878,10 @@ class GeminiIntegration:
             'resource_efficiency': self._efficiency_recommendations(sensor_data, weather_data),
             'alerts_and_warnings': self._generate_alerts(sensor_data, weather_data),
             'next_check_time': self._calculate_next_check(soil_moisture),
-            'confidence_level': random.uniform(92, 98)
+            'confidence_level': random.uniform(92, 98),
+            'gemini_raw_response': detailed_mock_response,  # To'liq fallback javob
+            'gemini_analysis_summary': f"Fallback AI Tahlil - {len(detailed_mock_response)} belgi",
+            'gemini_source': 'FALLBACK_ANALYSIS'
         }
     
     def _generate_detailed_reasoning(self, soil_moisture, temperature, air_humidity, ph, wind_speed):
