@@ -130,8 +130,15 @@ def get_realtime_data(request):
         current_readings = []
         
         for sensor in sensors:
-            # Generate FRESH reading every time
-            reading = SensorReading.generate_random_reading(sensor)
+            # Oxirgi mavjud reading'ni olish (yangi generate qilmaslik)
+            reading = sensor.get_latest_reading()
+            if not reading:
+                # Agar reading bo'lmasa, default qiymat
+                reading = SensorReading.objects.create(
+                    sensor=sensor,
+                    value=0.0,
+                    timestamp=timezone.now()
+                )
             
             # Enhanced status detection
             status = 'normal'

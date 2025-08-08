@@ -355,11 +355,37 @@
         // Sensors page initialization
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📡 Sensors page initialized');
-            loadSensorData();
+            loadSensorDataInitial(); // Faqat ilk marta yuklash
             
-            // Auto refresh every 10 seconds
-            setInterval(loadSensorData, 10000);
+            // Avtomatik yangilanish o'chirildi - faqat manual tugma orqali
         });
+        
+        // Initial load without refresh (existing data only)
+        async function loadSensorDataInitial() {
+            try {
+                document.body.classList.add('loading');
+                
+                const response = await fetch('/api/realtime/');
+                const data = await response.json();
+                
+                if (!data.success || data.error) {
+                    showEmptySensorData();
+                    showNotification('Mavjud sensor ma\'lumotlari yuklanmoqda...', 'info');
+                    return;
+                }
+                
+                updateSensorsDisplay(data.sensors || []);
+                updateLastUpdateTime();
+                showNotification('Mavjud sensor ma\'lumotlari yuklandi', 'info');
+                
+            } catch (error) {
+                console.error('Sensors data error:', error);
+                showEmptySensorData();
+                showNotification('Ma\'lumot yuklanmadi', 'error');
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
 
         // Notification function
         function showNotification(message, type = 'info') {
@@ -391,8 +417,23 @@
         async function loadSensorData() {
             try {
                 document.body.classList.add('loading');
-                showNotification('Sensor ma\'lumotlari yuklanmoqda...', 'info');
                 
+                // 1. Avval ma'lumotlarni manual refresh qilish
+                const refreshResponse = await fetch('/api/refresh-sensors/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const refreshData = await refreshResponse.json();
+                
+                if (refreshData.success) {
+                    showNotification(`${refreshData.total_updated} ta datchik yangilandi`, 'success');
+                } else {
+                    showNotification('Ma\'lumotlarni yangilashda xatolik', 'warning');
+                }
+                
+                // 2. Keyin yangilangan ma'lumotlarni olish
                 const response = await fetch('/api/realtime/');
                 const data = await response.json();
                 
@@ -404,7 +445,6 @@
                 
                 updateSensorsDisplay(data.sensors || []);
                 updateLastUpdateTime();
-                showNotification('Sensor ma\'lumotlari yangilandi ✓', 'success');
                 
             } catch (error) {
                 console.error('Sensors data error:', error);

@@ -481,6 +481,18 @@
             </div>
         </div>
 
+        <!-- Dashboard Controls -->
+        <div class="panel" style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button onclick="refreshDashboard()" style="background: linear-gradient(45deg, #00ff87, #60efff); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    🔄 Dashboard Yangilash
+                </button>
+                <span style="opacity: 0.8; font-size: 0.9rem;">
+                    Datchik ma'lumotlarini yangilash uchun tugmani bosing
+                </span>
+            </div>
+        </div>
+
         <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-card">
@@ -999,11 +1011,59 @@
             document.getElementById('aiDecisionPanel').style.background = 'rgba(128, 128, 128, 0.2)';
         }
 
-        // AUTO UPDATE every 15 seconds
-        setInterval(updateDashboardData, 15000);
+        // Avtomatik yangilanish o'chirildi - faqat manual refresh
+        // Initial data load after 3 seconds  
+        setTimeout(loadInitialData, 3000);
         
-        // Initial data load after 3 seconds
-        setTimeout(updateDashboardData, 3000);
+        // Initial load without refresh (existing data only)
+        async function loadInitialData() {
+            console.log('🏠 Loading initial dashboard data...');
+            await updateDashboardDataCached();
+        }
+        
+        // Manual refresh function with new data generation
+        async function refreshDashboard() {
+            console.log('🔄 Manual dashboard refresh...');
+            
+            try {
+                // Refresh sensor data first
+                const refreshResponse = await fetch('/api/refresh-sensors/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const refreshData = await refreshResponse.json();
+                
+                if (refreshData.success) {
+                    showNotification(`${refreshData.total_updated} ta datchik yangilandi`, 'success');
+                }
+                
+                // Then update dashboard
+                await updateDashboardData();
+                
+            } catch (error) {
+                console.error('Manual refresh error:', error);
+                showNotification('Yangilashda xatolik', 'error');
+            }
+        }
+        
+        // Cached data load (existing data only)
+        async function updateDashboardDataCached() {
+            try {
+                const response = await fetch('/api/dashboard/');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                updateAllDashboardElements(data);
+                showNotification('Mavjud ma\'lumotlar yuklandi', 'info');
+                
+            } catch (error) {
+                console.error('Dashboard cached data error:', error);
+                showNotification('Ma\'lumot yuklanmadi', 'warning');
+            }
+        }
     </script>
 </body>
 </html>

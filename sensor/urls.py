@@ -11,4 +11,5 @@ urlpatterns = [
     path('realtime/', views.get_realtime_data, name='realtime-data'),
     path('statistics/', views.get_sensor_statistics, name='sensor-statistics'),
     path('generate-sample-data/', views.generate_sample_data, name='generate-sample-data'),
+    path('refresh-sensors/', views.refresh_sensor_data, name='refresh-sensor-data'),
 ]

@@ -508,9 +508,7 @@ def get_dashboard_data(request):
         # Get latest weather data
         weather = WeatherData.objects.first()
         
-        # Generate new readings for all sensors
-        for sensor in sensors:
-            SensorReading.generate_random_reading(sensor)
+        # Ma'lumotlar faqat manual yangilanish tugmasi orqali generate bo'ladi
         
         # Update system status
         if system_status:
@@ -613,6 +611,40 @@ def _get_sensor_status(sensor, current_value):
         return {'status': 'Normal', 'color': '#00ff87'}
 
 
+@api_view(['POST'])
+def refresh_sensor_data(request):
+    """Manual refresh - yangi random ma'lumotlar yaratish"""
+    try:
+        sensors = Sensor.objects.filter(status='active')
+        updated_sensors = []
+        
+        for sensor in sensors:
+            # Har bir sensor uchun YANGI random reading yaratish
+            new_reading = SensorReading.generate_random_reading(sensor)
+            updated_sensors.append({
+                'sensor_id': sensor.sensor_id,
+                'sensor_name': sensor.name,
+                'new_value': new_reading.value,
+                'unit': sensor.sensor_type.unit,
+                'timestamp': new_reading.timestamp
+            })
+        
+        return Response({
+            'success': True,
+            'message': 'Datchik ma\'lumotlari yangilandi',
+            'updated_sensors': updated_sensors,
+            'total_updated': len(updated_sensors),
+            'timestamp': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e),
+            'message': 'Ma\'lumotlarni yangilashda xatolik'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['GET'])
 def get_realtime_data(request):
     """Get ALWAYS FRESH real-time sensor data - completely dynamic - NEVER FAILS"""
@@ -627,11 +659,18 @@ def get_realtime_data(request):
         
         realtime_data = []
         for sensor in sensors:
-            # YANGI random reading yaratish - hech qachon eski ma'lumot qaytarmaydi
-            reading = SensorReading.generate_random_reading(sensor)
+            # Oxirgi mavjud reading'ni olish (yangi generate qilmaslik)
+            latest_reading = sensor.get_latest_reading()
+            if not latest_reading:
+                # Agar hech qanday reading bo'lmasa, 0 qiymat bilan ko'rsatish
+                latest_reading = SensorReading.objects.create(
+                    sensor=sensor,
+                    value=0.0,
+                    timestamp=timezone.now()
+                )
             
             # Advanced status aniqlash
-            status_info = _get_sensor_status(sensor, reading.value)
+            status_info = _get_sensor_status(sensor, latest_reading.value)
             
             # Enhanced sensor data
             realtime_data.append({
@@ -639,15 +678,15 @@ def get_realtime_data(request):
                 'sensor_name': sensor.name,
                 'sensor_type': sensor.sensor_type.name,
                 'icon': sensor.sensor_type.icon,
-                'value': reading.value,
+                'value': latest_reading.value,
                 'unit': sensor.sensor_type.unit,
                 'location': sensor.location,
-                'timestamp': reading.timestamp,
+                'timestamp': latest_reading.timestamp,
                 'status': status_info,
                 'is_critical': sensor.is_critical,
-                'is_anomaly': reading.is_anomaly,
-                'data_quality': 'fresh',  # Always fresh
-                'measurement_id': reading.id
+                'is_anomaly': latest_reading.is_anomaly,
+                'data_quality': 'cached',  # Cached data
+                'measurement_id': latest_reading.id
             })
         
         # REAL-TIME system status yangilanishi
@@ -668,14 +707,14 @@ def get_realtime_data(request):
         
         return Response({
             'success': True,
-            'data_source': 'FRESH_RANDOM_GENERATION',
+            'data_source': 'CACHED_READINGS',
             'sensors': realtime_data,
             'timestamp': timezone.now().isoformat(),
             'active_sensors_count': sensors.count(),
             'critical_alerts': critical_count,
             'warning_alerts': warning_count,
             'system_status': SystemStatusSerializer(system_status).data if system_status else None,
-            'data_freshness': 'ALWAYS_NEW'  # Emphasis on fresh data
+            'data_freshness': 'CACHED_UNTIL_MANUAL_REFRESH'
         })
         
     except Exception as e:

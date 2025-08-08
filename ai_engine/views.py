@@ -24,10 +24,11 @@ def analyze_irrigation_need(request):
         # Collect data from all active sensors - generate new readings
         sensors = Sensor.objects.filter(status='active')
         for sensor in sensors:
-            # Generate new random reading for fresh AI analysis
-            fresh_reading = SensorReading.generate_random_reading(sensor)
-            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
-            sensors_data[sensor_key] = fresh_reading.value
+            # Oxirgi mavjud reading'ni olish AI tahlil uchun
+            latest_reading = sensor.get_latest_reading()
+            if latest_reading:
+                sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+                sensors_data[sensor_key] = latest_reading.value
         
         # Get or generate fresh weather data
         latest_weather = WeatherData.objects.first()
@@ -124,10 +125,11 @@ def analyze_plant_health(request):
         sensors_data = {}
         sensors = Sensor.objects.filter(status='active')
         for sensor in sensors:
-            # Generate new random reading for fresh AI analysis
-            fresh_reading = SensorReading.generate_random_reading(sensor)
-            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
-            sensors_data[sensor_key] = fresh_reading.value
+            # Oxirgi mavjud reading'ni olish AI tahlil uchun
+            latest_reading = sensor.get_latest_reading()
+            if latest_reading:
+                sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+                sensors_data[sensor_key] = latest_reading.value
         
         # Get plant data
         plant_data = {
@@ -195,10 +197,11 @@ def comprehensive_analysis(request):
         sensors_data = {}
         sensors = Sensor.objects.filter(status='active')
         for sensor in sensors:
-            # Generate new random reading for comprehensive AI analysis
-            fresh_reading = SensorReading.generate_random_reading(sensor)
-            sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
-            sensors_data[sensor_key] = fresh_reading.value
+            # Oxirgi mavjud reading'ni olish keng qamrovli AI tahlil uchun
+            latest_reading = sensor.get_latest_reading()
+            if latest_reading:
+                sensor_key = sensor.sensor_type.name.lower().replace(' ', '_')
+                sensors_data[sensor_key] = latest_reading.value
         
         # Get or generate fresh weather data for comprehensive analysis
         latest_weather = WeatherData.objects.first()
